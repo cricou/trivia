@@ -1,0 +1,56 @@
+{
+    "buildit": {
+        "buildit-plugins": {
+            "plugin": "inouk.buildit.git_checkout",
+            "repositories": {
+                "core-buildit-plugins": {
+                    "repository": "git@gitlab.com:inouk/ikb.git",
+                    "directory": "ikb",
+                    "refspec__disabled": null,
+                    "update": true
+                }
+            }
+        },
+        "ENV": {
+            "plugin": "ikb.environ"
+        },
+        "py3x": {
+            "plugin": "ikb.virtualenv",
+            "name": "py3x",
+            "interpreter": "python3",
+            "setuptools-version": "50.3.0",
+            "pip-version": "21.1.3"
+        },
+        "odoo": {
+            "plugin": "ikb.odoo",
+            "python": "${py3x}",
+            "version": {
+                "type": "git",
+                "repository": "https://github.com/odoo/odoo.git",
+                "directory": "parts/odoo",
+                "refspec": "14.0",
+                "branch": "14.0",
+                "depth": 5
+            },
+            "requirements": {
+                "options": {
+                    "no-deps": false
+                },
+                "eggs": {
+                }
+            },
+            "addons_path__comment": "allow to add path in addons path",
+            "addons_path__disabled": ["path1", "path2"],
+            "addons": {
+                "project_addons": {
+                    "type": "local",
+                    "path": "./project_addons"
+                }
+            },
+            "config": {
+                "options": {
+                }
+            }
+        }
+    }
+}

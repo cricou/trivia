@@ -1,0 +1,44 @@
+{
+    "__$extends": "appserver.buildit.json",
+    "buildit": {
+        "py3x": {
+            "eggs_disabled": {
+                "sphinx": "__$latest",
+                "patchwork": "__$latest",
+                "boto3": "__$latest",
+                "fabric2": "2.5.0",
+                "botocore": "__$latest",
+                "slackdown": "0.0.3",
+                "google-storage": "__$delete"
+            },
+            "eggs": {
+                "jsonpickle": "__$latest",
+                "python-slugify": "__$latest"
+            }
+        },
+        "odoo": {
+            "config": {
+                "options": {
+                    "db_user": "${ENV:USER}",
+                    "db_password": "${ENV:PGPASSWORD}",
+                    "admin_passwd": "${ENV:ODOO_ADMIN_PASSWORD}",
+                    "db_name__disabled": "dev_buildit_v13c",
+                    "dbfilter": "^.*_v13c$",
+                    "http_port": 11069
+                }
+            }
+        },
+        "a_list__$merge": [
+            "titi", 
+            3.14, 
+            {
+                "name": "tampa", 
+                "key2": "de mer"
+            }
+        ],
+        "a_list__$delete": [
+            "toto"
+        ]
+
+    }
+}

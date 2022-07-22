@@ -1,0 +1,67 @@
+{
+    "__$extends": "odoo.base.buildit.json",
+    "buildit": {
+        "py3x": {
+            "eggs": {
+            }
+        },
+        "odoo": {
+            "config": {
+            },
+            "addons_disabled_e": {
+                "enterprise": {
+                    "type": "git",
+                    "repository": "git@github.com:odoo/enterprise.git",
+                    "directory": "parts/enterprise",
+                    "refspec": "14.0"
+                }
+            },
+            "addons__disabled": {
+                "inouk_core": {
+                    "type": "git",
+                    "w_repository": "git@gitlab.com:cmorisse/inouk_core.git",
+                    "r_repository": "https://gitlab.com/cmorisse/inouk_core.git",
+                    "repository": "https://gitlab.com/cmorisse/inouk_core.git",
+                    "directory": "inouk_core",
+                    "refspec": "14.0",
+                    "group": "parts/inouk_addons"
+                },
+                "inouk_message_queue": {
+                    "comment": "IMQ is only available as a private repository",
+                    "type": "git",
+                    "w_repository": "git@gitlab.com:cmorisse/inouk_message_queue.git",
+                    "repository": "git@gitlab.com:cmorisse/inouk_message_queue.git",
+                    "directory": "inouk_message_queue",
+                    "#refspec": "14.0",
+                    "refspec": "cmo_pg_queue",
+                    "group": "parts/inouk_addons"
+                },
+                "inouk_odoo_data_migration_toolkit": {
+                    "type": "git",
+                    "repository": "git@gitlab.com:cmorisse/inouk_odoo_data_migration_toolkit.git",
+                    "directory": "inouk_odoo_data_migration_toolkit",
+                    "refspec": "12.0",
+                    "group": "parts/inouk_addons"
+                },
+                "inouk_server_detect": {
+                    "type": "git",
+                    "w_repository": "git@gitlab.com:cmorisse/inouk_server_detect.git",
+                    "r_repository": "https://gitlab.com/cmorisse/inouk_server_detect.git",
+                    "repository": "https://gitlab.com/cmorisse/inouk_server_detect.git",
+                    "directory": "inouk_server_detect",
+                    "refspec": "14.0",
+                    "group": "parts/inouk_addons"
+                },
+				"inouk_attachments_storage": {
+                    "type": "git",
+                    "w_repository": "git@github.com:cmorisse/inouk_attachments_storage.git",
+                    "r_repository": "https://github.com/cmorisse/inouk_attachments_storage.git",
+                    "repository": "https://github.com/cmorisse/inouk_attachments_storage.git",
+                    "directory": "inouk_attachments_storage",
+                    "refspec": "13.0",
+                    "group": "parts/inouk_addons"
+                }
+            }
+        }
+    }
+}
