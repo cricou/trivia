@@ -1,0 +1,11 @@
+bin/
+etc/
+parts/
+py3x/
+buildit.json
+buildit-plugins/
+
+.vscode
+egg_source/
+
+.python-version
