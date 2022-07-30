@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <menuitem
+            id="menu_trivia_tms_root"
+            name="TMS"
+            sequence="80"
+            groups="base.group_no_one"/>
+        <menuitem
+            id="menu_mission_order_main"
+            name="Mission Orders"
+            parent="menu_trivia_tms_root"
+            sequence="10"
+            groups="base.group_no_one"/>
+    </data>
+</odoo>
