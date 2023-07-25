@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- STAGES TREE VIEW + MUTI_EDIT -->
+    <record id="tms_point_of_interest_tree" model="ir.ui.view">
+        <field name="name">point.of.interest.tree</field>
+        <field name="model">point.of.interest</field>
+        <field name="arch" type="xml">
+            <tree string="Points Of Interest">
+                <field name="name"/>
+                <field name="full_address"/>
+                <field name="longitude"/>
+                <field name="latitude"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="tms_point_of_interest_form" model="ir.ui.view">
+        <field name="name">point.of.interest.form</field>
+        <field name="model">point.of.interest</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Points Of Interest">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="full_address"/>
+                        <field name="longitude"/>
+                        <field name="latitude"/>
+                    </group>
+                </sheet>
+            </form>
+            
+        </field>
+    </record>
+
+    <record id="tms_point_of_interest_action" model="ir.actions.act_window">
+        <field name="name">Points Of Interest</field>
+        <field name="res_model">point.of.interest</field>
+        <field name="view_id" ref="trivia_tms.tms_point_of_interest_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Set a new point of interest
+          </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_tms_point_of_interest_menu"
+        parent="menu_mission_order_main"
+        action="tms_point_of_interest_action"
+        sequence="20"/>
+
+</odoo>

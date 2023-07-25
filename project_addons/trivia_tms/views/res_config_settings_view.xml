@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="trivia_res_config_settings_view_form_inherit" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="25" />
+            <field name="inherit_id" ref="base.res_config_settings_view_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('settings')]" position="inside">
+                    <div class="app_settings_block" data-string="trivia" string="Trivia" data-key="trivia_tms" groups="base.group_user">
+                        <h2>Here API</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-8 col-lg-12 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Here API credentials</span>
+                                    <div class="text-muted">
+                                        API Key
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="here_api_key" password="True"/>
+                                    </div>
+                                    <div class="text-muted">
+                                        OAuth KEY ID
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="here_oauth_key_id" password="True"/>
+                                    </div>
+                                    <div class="text-muted">
+                                        OAuth SECRET ID
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="here_oauth_secret_id" password="True"/>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        <h2>Truck configuration</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-8 col-lg-12 o_setting_box">
+                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Trucks fuel consumption</span>
+                                    <div class="text-muted">
+                                        Truck fuel consumption litres per 100km
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="truck_fuel_consumption"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
