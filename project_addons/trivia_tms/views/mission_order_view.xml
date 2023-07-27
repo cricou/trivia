@@ -27,6 +27,9 @@
                 <field name="loading_date" widget="remaining_days"/>
                 <field name="delivery"/>
                 <field name="delivery_date"/>
+                <field name="driving_time" widget="float_time"/>
+                <field name="distance"/>
+                <field name="total_cost"/>
                 <field name="state"
                        widget="badge"
                        decoration-success="state=='done'"
@@ -55,15 +58,11 @@
                         <field name="date"/>
                     </group>
                     <group col="4">
-                        <field name="loading"
-                        context="{'show_address': 1}"
-                        options='{"always_reload": True, "highlight_first_line": True}'/>
+                        <field name="loading"/>
                         <field name="loading_date"/>
                     </group>
                     <group col="4">
-                        <field name="delivery"
-                        context="{'show_address': 1}"
-                        options='{"always_reload": True, "highlight_first_line": True}'/>
+                        <field name="delivery"/>
                         <field name="delivery_date"/>
                     </group>
                     <group>
@@ -106,8 +105,8 @@
     </record>
 
     <menuitem id="menu_tms_mission_order_menu"
-        parent="menu_mission_order_main"
+        parent="menu_routes_main"
         action="tms_mission_order_action"
-        sequence="10"/>
+        sequence="20"/>
 
 </odoo>

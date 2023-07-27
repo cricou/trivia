@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="sequence_tour_seq" model="ir.sequence">
+            <field name="name">TMS Trivia tour sequence</field>
+            <field name="code">trivia_tms.tour</field>
+            <field name="prefix">TO-%(year)s-%(month)s-</field>
+            <field name="padding">5</field>
+            <field eval="1" name="number_next"/>
+            <field eval="1" name="number_increment"/>
+        </record>
+    </data>
+</odoo>

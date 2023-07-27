@@ -46,8 +46,8 @@
     </record>
 
     <menuitem id="menu_tms_point_of_interest_menu"
-        parent="menu_mission_order_main"
+        parent="menu_trivia_tms_root"
         action="tms_point_of_interest_action"
-        sequence="20"/>
+        sequence="30"/>
 
 </odoo>

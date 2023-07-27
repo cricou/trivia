@@ -3,11 +3,12 @@
     <data>
         <menuitem
             id="menu_trivia_tms_root"
+            web_icon="trivia_tms,static/description/icon.png"
             name="TMS"
             sequence="80"/>
         <menuitem
-            id="menu_mission_order_main"
-            name="Mission Orders"
+            id="menu_routes_main"
+            name="Routes"
             parent="menu_trivia_tms_root"
             sequence="10"/>
     </data>

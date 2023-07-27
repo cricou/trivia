@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_trivia_tms_mission_order,access_trivia_tms_mission_order,model_mission_order,base.group_user,1,1,1,1
 access_trivia_tms_point_of_interest,access_trivia_tms_point_of_interest,model_point_of_interest,base.group_user,1,1,1,1
+access_trivia_tms_trivia_tour,access_trivia_tms_trivia_tour,model_trivia_tour,base.group_user,1,1,1,1
