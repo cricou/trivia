@@ -1,19 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- <record id="crm_lead_stage_search" model="ir.ui.view">
-        <field name="name">Stage - Search</field>
-        <field name="model">crm.stage</field>
-        <field name="arch" type="xml">
-            <search string="Stage Search">
-                <field name="name"/>
-                <field name="sequence"/>
-                <field name="is_won"/>
-                <field name="team_id"/>
-            </search>
-        </field>
-    </record> -->
-
     <!-- STAGES TREE VIEW + MUTI_EDIT -->
     <record id="tms_mission_order_tree" model="ir.ui.view">
         <field name="name">mission.order.tree</field>

@@ -41,6 +41,7 @@ class MissionOrder(models.Model):
     def calc_routes(self):
         here_api_key = self.env['ir.config_parameter'].sudo().get_param('trivia_tms.here_api_key')
         truck_fuel_consumption = self.env['ir.config_parameter'].sudo().get_param('trivia_tms.truck_fuel_consumption')
+        fuel_cost = self.env['ir.config_parameter'].sudo().get_param('trivia_tms.fuel_cost')
         print(truck_fuel_consumption)
 
         origin_coordinate = str(self.loading.latitude) + "," + str(self.loading.longitude)
@@ -57,7 +58,7 @@ class MissionOrder(models.Model):
             for toll in requests_result['routes'][0]["sections"][0]["tolls"]:
                 toll_cost += toll['fares'][0]['convertedPrice']['value']
         self.toll_cost = toll_cost
-        self.fuel_cost = float(distance_km) * float(truck_fuel_consumption) / 100 * 1.70
+        self.fuel_cost = float(distance_km) * float(truck_fuel_consumption) / 100 * float(fuel_cost)
         self.total_cost = self.toll_cost + self.fuel_cost
         self.distance = round(float(distance_km),2)
         self.driving_time = float(driving_time)

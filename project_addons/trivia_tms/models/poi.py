@@ -45,8 +45,6 @@ class PointOfInterest(models.Model):
 
     def write(self, values):
         """Override default Odoo write function and extend."""
-        print(values)
-        # Do your custom logic here
         if 'full_address' in values:
             try:
                 here_api_key = self.env['ir.config_parameter'].sudo().get_param('trivia_tms.here_api_key')

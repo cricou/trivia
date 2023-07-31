@@ -4,7 +4,7 @@
         <menuitem
             id="menu_trivia_tms_root"
             web_icon="trivia_tms,static/description/icon.png"
-            name="TMS"
+            name="Trivia"
             sequence="80"/>
         <menuitem
             id="menu_routes_main"

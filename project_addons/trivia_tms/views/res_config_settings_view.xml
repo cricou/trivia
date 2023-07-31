@@ -44,10 +44,17 @@
                                 <div class="o_setting_right_pane">
                                     <span class="o_form_label">Trucks fuel consumption</span>
                                     <div class="text-muted">
-                                        Truck fuel consumption litres per 100km
+                                        Truck fuel consumption liters per 100km
                                     </div>
                                     <div class="text-muted">
                                         <field name="truck_fuel_consumption"/>
+                                    </div>
+                                    <span class="o_form_label">Trucks fuel cost</span>
+                                    <div class="text-muted">
+                                        Truck fuel cost per liter
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="fuel_cost"/>
                                     </div>
                                 </div>
                             </div>
