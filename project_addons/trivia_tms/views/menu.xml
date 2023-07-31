@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <menuitem
+            id="menu_trivia_tms_root"
+            web_icon="trivia_tms,static/description/icon.png"
+            name="Trivia"
+            sequence="80"/>
+        <menuitem
+            id="menu_routes_main"
+            name="Routes"
+            parent="menu_trivia_tms_root"
+            sequence="10"/>
+    </data>
+</odoo>
