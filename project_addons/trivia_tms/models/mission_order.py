@@ -20,11 +20,9 @@ class MissionOrder(models.Model):
     _order = 'sequence'
 
     sequence = fields.Integer(string="Sequence")
-    name = fields.Char(string="Name",
-                       default=lambda self: self.env['ir.sequence'].next_by_code('trivia_tms.mission.order'))
+    name = fields.Char(string="Name", copy=False, readonly=True)
     date = fields.Date(string="Order date",
                        default=lambda self: fields.Date.today())
-    driver = fields.Many2one('res.partner', string="Driver")
     loading = fields.Many2one('point.of.interest', string="Loading")
     loading_date = fields.Datetime(string="Loading date")
     delivery = fields.Many2one('point.of.interest', string="Delivery")
@@ -37,12 +35,38 @@ class MissionOrder(models.Model):
     fuel_cost = fields.Float(string="Fuel cost")
     toll_cost = fields.Float(string="Tolls cost")
     total_cost = fields.Float(string="Total cost")
+    includes_ferry = fields.Boolean(string = "Includes Ferry")
+    ferry_time = fields.Float(string="Ferry time")
+    vehicle_id = fields.Many2one('fleet.vehicle', string="Vehicle")
+    driver_id = fields.Many2one('res.partner')
+    fixed_price = fields.Float(string="Fixed Price")
+    price_per_km = fields.Float(string="Price/Km", compute='_calc_price_km')
+
+    @api.model
+    def create(self, values):
+        if not values.get('name'):
+            # fallback on any pos.order sequence
+            values['name'] = self.env['ir.sequence'].next_by_code('trivia_tms.mission.order')
+        return super(MissionOrder, self).create(values)
+
+    def _calc_price_km(self):
+        for rec in self:
+            if rec.fixed_price and rec.distance:
+                rec.price_per_km = rec.fixed_price / rec.distance
+            else:
+                rec.price_per_km = 0
+
+    @api.onchange('vehicle_id')
+    def calc_driver(self):
+        if self.vehicle_id:
+            self.driver_id = self.vehicle_id.driver_id
+        else:
+            self.driver_id = None
 
     def calc_routes(self):
         here_api_key = self.env['ir.config_parameter'].sudo().get_param('trivia_tms.here_api_key')
         truck_fuel_consumption = self.env['ir.config_parameter'].sudo().get_param('trivia_tms.truck_fuel_consumption')
         fuel_cost = self.env['ir.config_parameter'].sudo().get_param('trivia_tms.fuel_cost')
-        print(truck_fuel_consumption)
 
         origin_coordinate = str(self.loading.latitude) + "," + str(self.loading.longitude)
         destination_coordinate = str(self.delivery.latitude) + "," + str(self.delivery.longitude)
@@ -50,16 +74,27 @@ class MissionOrder(models.Model):
         request = "https://router.hereapi.com/v8/routes?apikey=%s&origin=%s&destination=%s&return=summary,tolls&transportMode=truck&currency=EUR&truck[grossWeight]=12000&truck[height]=400" % (here_api_key, origin_coordinate, destination_coordinate)
         request_get = get(url = request)
         requests_result = request_get.json()
-        print(requests_result)
-        driving_time = requests_result['routes'][0]["sections"][0]['summary']["duration"] / 60 / 60
-        distance_km = requests_result['routes'][0]["sections"][0]['summary']["length"] / 1000
+        driving_time = 0
+        distance_km = 0
         toll_cost = 0
-        if requests_result['routes'][0]["sections"][0].get('tolls'):
-            for toll in requests_result['routes'][0]["sections"][0]["tolls"]:
-                toll_cost += toll['fares'][0]['convertedPrice']['value']
+        ferry_time = 0
+        includes_ferry = False
+        sections = requests_result['routes'][0]['sections']
+        for section in sections:
+            if section.get('tolls'):
+                for toll in section["tolls"]:
+                    toll_cost += toll['fares'][0]['convertedPrice']['value']
+            if section['transport']['mode'] in ['truck', 'carShuttleTrain']:
+                driving_time += section['summary']["duration"] / 60 / 60
+                distance_km += section['summary']["length"] / 1000
+            if section['transport']['mode'] in ['ferry']:
+                ferry_time += section['summary']["duration"] / 60 / 60
+                includes_ferry = True
         self.toll_cost = toll_cost
         self.fuel_cost = float(distance_km) * float(truck_fuel_consumption) / 100 * float(fuel_cost)
         self.total_cost = self.toll_cost + self.fuel_cost
         self.distance = round(float(distance_km),2)
         self.driving_time = float(driving_time)
+        self.ferry_time = float(ferry_time)
+        self.includes_ferry = includes_ferry
 
