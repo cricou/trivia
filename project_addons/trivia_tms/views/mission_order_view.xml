@@ -15,6 +15,8 @@
                 <field name="delivery_date"/>
                 <field name="driving_time" widget="float_time"/>
                 <field name="distance"/>
+                <field name="reserved_payload" widget="progressbar"/>
+                <field name="reserved_length" widget="progressbar"/>
                 <field name="total_cost"/>
                 <field name="fixed_price"/>
                 <field name="price_per_km"/>
@@ -33,6 +35,7 @@
         <field name="arch" type="xml">
             <form string="Mission orders">
                 <header>
+                    <button name="action_create_invoice" string="Create invoice" type="object" class="btn-primary" attrs="{'invisible':['|',('state','!=','done'),('account_move_id','!=', False)]}"/>
                     <field name="state" widget="statusbar" clickable="1"/>
                 </header>
                 <sheet>
@@ -45,9 +48,13 @@
                     <group>
                         <field name="date"/>
                     </group>
+                    <group>
+                        <field name="partner_id"/>
+                    </group>
                     <group col="4">
                         <field name="vehicle_id"/>
                         <field name="driver_id"/>
+                        <field name="semi_trailer_id"/>
                     </group>
                     <group col="4">
                         <field name="loading"/>
@@ -58,6 +65,15 @@
                     <group col="4">
                         <field name="fixed_price"/>
                         <field name="price_per_km" readonly="1"/>
+                    </group>
+                    <group attrs="{'invisible': [('account_move_id','=',False)] }">
+                        <field name="account_move_id"/>
+                    </group>
+                    <group col="4">
+                        <field name="cargo_payload"/>
+                        <field name="reserved_payload" widget="progressbar"/>
+                        <field name="cargo_length"/>
+                        <field name="reserved_length" widget="progressbar"/>
                     </group>
                     <group>
                         <field name="note"/>
@@ -105,6 +121,6 @@
     <menuitem id="menu_tms_mission_order_menu"
         parent="menu_routes_main"
         action="tms_mission_order_action"
-        sequence="20"/>
+        sequence="10"/>
 
 </odoo>

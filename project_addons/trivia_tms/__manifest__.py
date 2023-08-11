@@ -15,7 +15,10 @@
         'views/menu.xml',
         'views/tour_view.xml',
         'views/poi_view.xml',
-        'views/mission_order_view.xml'
+        'views/mission_order_view.xml',
+        'views/semi_trailer_view.xml',
+        'views/fleet_vehicle_view.xml',
+        'views/tour_step_view.xml',
     ],
     'demo': [
     ],

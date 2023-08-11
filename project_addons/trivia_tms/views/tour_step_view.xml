@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- STAGES TREE VIEW + MUTI_EDIT -->
+    <record id="tms_trivia_tour_step_tree" model="ir.ui.view">
+        <field name="name">trivia.tour.step.tree</field>
+        <field name="model">trivia.tour.step</field>
+        <field name="arch" type="xml">
+            <tree string="Tour Steps">
+                <field name="activity_type" invisible="1"/>
+                <button readonly="True" class="oe_inline oe_stat_button" icon="fa-solid fa-truck" attrs="{'invisible': [('activity_type', '!=', 'departure')]}"/>
+                <button readonly="True" class="oe_inline oe_stat_button" icon="fa-solid fa-home" attrs="{'invisible': [('activity_type', '!=', 'arrival')]}"/>
+                <button readonly="True" class="oe_inline oe_stat_button" icon="fa-solid fa-chevron-up" attrs="{'invisible': [('activity_type', '!=', 'pickup')]}"/>
+                <button readonly="True" class="oe_inline oe_stat_button" icon="fa-solid fa-chevron-down" attrs="{'invisible': [('activity_type', '!=', 'delivery')]}"/>
+                <button readonly="True" class="oe_inline oe_stat_button" icon="fa-solid fa-coffee" attrs="{'invisible': [('activity_type', '!=', 'break')]}"/>
+                <field name="full_address"/>
+                <field name="reserved_length"/>
+                <field name="arrival_date"/>
+                <field name="departure_date"/>
+                <field name="state"
+                       widget="badge"
+                       decoration-success="state=='done'"
+                       decoration-info="state=='in_progress'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="tms_trivia_tour_step_form" model="ir.ui.view">
+        <field name="name">trivia.tour.step.form</field>
+        <field name="model">trivia.tour.step</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Tour Steps">
+                <header>
+                    <field name="state" widget="statusbar" clickable="1"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group col="4">
+                        <field name="tour_id"/>
+                        <field name="mission_order_id"/>
+                    </group>
+                    <group col="4">
+                        <field name="activity_type"/>
+                    </group>
+                    <group col="4">
+                        <field name="full_address"/>
+                        <field name="distance"/>
+                    </group>
+                    <group col="4">
+                        <field name="arrival_date"/>
+                        <field name="departure_date"/>
+                    </group>
+                    <group col="4">
+                        <field name="cargo_payload"/>
+                        <field name="reserved_payload"/>
+                        <field name="cargo_length"/>
+                        <field name="reserved_length"/>
+                    </group>
+                    <group>
+                        <field name="note"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <!-- Followers view -->
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <!-- Chatter view -->
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="tms_trivia_tour_step_action" model="ir.actions.act_window">
+        <field name="name">Tour Steps</field>
+        <field name="res_model">trivia.tour.step</field>
+        <field name="view_id" ref="trivia_tms.tms_trivia_tour_step_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Set a new tour step
+          </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_tms_trivia_tour_step_menu"
+        parent="menu_tour_main"
+        action="tms_trivia_tour_step_action"
+        sequence="30"/>
+
+</odoo>

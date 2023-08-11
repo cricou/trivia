@@ -6,6 +6,7 @@ import json
 from json import dumps
 import http.client
 import time
+from datetime import datetime
 
 MO_STATUS=[
     ('draft', "Draft"),
@@ -39,8 +40,19 @@ class MissionOrder(models.Model):
     ferry_time = fields.Float(string="Ferry time")
     vehicle_id = fields.Many2one('fleet.vehicle', string="Vehicle")
     driver_id = fields.Many2one('res.partner')
+    semi_trailer_id = fields.Many2one('trivia.semi.trailer', string="Semi Trailer")
     fixed_price = fields.Float(string="Fixed Price")
     price_per_km = fields.Float(string="Price/Km", compute='_calc_price_km')
+    account_move_id = fields.Many2one('account.move', string="Invoice")
+
+    #loading
+    cargo_length = fields.Float(string="Cargo Length")
+    cargo_payload = fields.Float(string="Cargo Payload")
+
+    reserved_length = fields.Float(string="Reserved Length", compute='_calc_reserved_length')
+    reserved_payload = fields.Float(string="Reserved Payload", compute='_calc_reserved_payload')
+
+    partner_id = fields.Many2one('res.partner')
 
     @api.model
     def create(self, values):
@@ -48,6 +60,43 @@ class MissionOrder(models.Model):
             # fallback on any pos.order sequence
             values['name'] = self.env['ir.sequence'].next_by_code('trivia_tms.mission.order')
         return super(MissionOrder, self).create(values)
+
+    def action_create_invoice(self):
+        if not self.partner_id:
+            raise ValidationError("You must add a partner to create an invoice")
+        line = {
+            'name': self.loading.full_address + " - " + self.delivery.full_address,
+            'price_unit': self.fixed_price,
+            'tax_ids': [(6, 0, [1])]
+        }
+        invoice_id = self.env['account.move'].create({
+            'move_type': 'out_invoice',
+            'partner_id': self.partner_id.id,
+            'partner_shipping_id': self.partner_id.id,
+            'payment_reference': self.name,
+            'invoice_payment_term_id': self.partner_id.property_payment_term_id.id,
+            'invoice_date': datetime.now(),
+            'invoice_line_ids': [
+                (0, 0, line),
+            ],
+        })
+        print(invoice_id)
+        self.account_move_id = invoice_id
+
+    def _calc_reserved_payload(self):
+        for rec in self:
+            print(rec)
+            if rec.semi_trailer_id and rec.semi_trailer_id.payload_capacity != 0 and rec.cargo_payload != 0:
+                rec.reserved_payload = rec.cargo_payload / rec.semi_trailer_id.payload_capacity * 100
+            else:
+                rec.reserved_payload = None
+            
+    def _calc_reserved_length(self):
+        for rec in self:
+            if rec.semi_trailer_id and rec.semi_trailer_id.internal_length != 0 and rec.cargo_length != 0:
+                rec.reserved_length = rec.cargo_length / rec.semi_trailer_id.internal_length * 100
+            else:
+                rec.reserved_length = None
 
     def _calc_price_km(self):
         for rec in self:
@@ -57,11 +106,14 @@ class MissionOrder(models.Model):
                 rec.price_per_km = 0
 
     @api.onchange('vehicle_id')
-    def calc_driver(self):
+    def get_driver(self):
         if self.vehicle_id:
             self.driver_id = self.vehicle_id.driver_id
+            self.semi_trailer_id = self.vehicle_id.semi_trailer_id
         else:
             self.driver_id = None
+            self.semi_trailer_id = None
+
 
     def calc_routes(self):
         here_api_key = self.env['ir.config_parameter'].sudo().get_param('trivia_tms.here_api_key')

@@ -26,6 +26,11 @@
             <form string="Tours">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
+                        <button name="open_tour_step"
+                                type="object" class="oe_stat_button" icon="fa-list">
+                            <field name="tour_step_count" class="o_stat_value"/>
+                            <span class="o_stat_text">Steps</span>
+                        </button>
                         <button class="oe_stat_button" name="calc_full_routes" string="Calculate Routes" type="object" icon="fa-road"/>
                         <button class="oe_stat_button" name="google_map_url" string="Google map" type="object" icon="fa-map"/>
                     </div>
@@ -76,6 +81,12 @@
                         </page>
                     </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <!-- Followers view -->
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <!-- Chatter view -->
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
             </form>
             
         </field>
@@ -93,8 +104,8 @@
     </record>
 
     <menuitem id="menu_tms_trivia_tour_menu"
-        parent="menu_routes_main"
+        parent="menu_tour_main"
         action="tms_trivia_tour_action"
-        sequence="10"/>
+        sequence="20"/>
 
 </odoo>
