@@ -10,6 +10,7 @@ import hmac
 import hashlib
 import random
 import time
+from datetime import datetime
 
 class TriviaTour(models.Model):
     _name = 'trivia.tour'
@@ -17,9 +18,12 @@ class TriviaTour(models.Model):
     _inherit = ['mail.thread']
 
     name = fields.Char(string="Name", copy=False, readonly=True)
-    start_date = fields.Date(string="Start Date")
-    end_date = fields.Date(string="End Date")
+    start_date = fields.Datetime(string="Start Date")
+    end_date = fields.Datetime(string="End Date")
     mission_order_ids = fields.Many2many('mission.order', string="Missions order")
+
+    start_position = fields.Many2one('point.of.interest')
+    end_position = fields.Many2one('point.of.interest')
 
     note = fields.Text(string="Note")
 
@@ -79,8 +83,7 @@ class TriviaTour(models.Model):
             "oauth_nonce": oauth_nonce,
             "oauth_signature_method": "HMAC-SHA256",
             "oauth_timestamp": oauth_timestamp,
-            "oauth_version": "1.0",
-            "scope": scope
+            "oauth_version": "1.0"
         }
         
 
@@ -120,17 +123,213 @@ class TriviaTour(models.Model):
 
         # Préparation des données du corps de la requête
         body = {
-            "grant_type": "client_credentials",
-            "scope": scope
+            "grant_type": "client_credentials"
         }
 
         # Envoi de la requête POST
         response = post(url, data=body, headers=headers)
-        print(response.status_code)
-        print(response.text)
         if response.status_code == 200:
             token_json = response.json()
             return token_json["access_token"]
+
+    def create_steps(self, json):
+        statistic = json['statistic']
+        tours = json['tours']
+
+        for tour in tours:
+            for stop in tour['stops']:
+                full_address = None
+                sequence=1
+                activity_type = stop['activities'][0]['type']
+                mo_id = stop['activities'][0].get('jobTag') or None
+                if stop['time'].get('arrival'):
+                    arrival_reformat = stop['time']['arrival'].replace("Z","")
+                    arrival_date = datetime.strptime(arrival_reformat, "%Y-%m-%dT%H:%M:%S")
+                else:
+                    arrival_date = None
+                if stop['time'].get('departure'):
+                    departure_reformat = stop['time']['departure'].replace("Z","")
+                    departure_date = datetime.strptime(departure_reformat, "%Y-%m-%dT%H:%M:%S")
+                else:
+                    departure_date = None
+                if len(stop["load"]) == 1:
+                    reserved_payload = stop["load"][0]
+                    reserved_length = stop["load"][0]
+                else:
+                    reserved_payload = stop["load"][1]
+                    reserved_length = stop["load"][0]
+                if mo_id:
+                    mo = self.env['mission.order'].search([('id', '=', mo_id)])
+                    if activity_type == "pickup":
+                        full_address = mo.loading.full_address
+                    if activity_type == "delivery":
+                        full_address = mo.delivery.full_address
+                        
+                self.env['trivia.tour.step'].create({
+                    "sequence": sequence,
+                    "tour_id": self.id,
+                    "mission_order_id": mo_id,
+                    "activity_type": activity_type,
+                    "distance": float(stop['distance']) / 1000,
+                    "arrival_date": arrival_date,
+                    "departure_date": departure_date,
+                    "reserved_payload": float(reserved_payload),
+                    "reserved_length": float(reserved_length) / 100,
+                    "full_address": full_address
+                })
+                sequence += 1
+                
+    def tour_step_configuration(self):
+        return False
+
+    def tour_step_fleet(self):
+
+        truck_fuel_consumption = self.env['ir.config_parameter'].sudo().get_param('trivia_tms.truck_fuel_consumption')
+    
+        start_date = str(self.start_date.isoformat('T') + "Z")
+        end_date = str(self.end_date.isoformat('T') + "Z")
+        distance = float(truck_fuel_consumption) / 100000
+
+        #capacity
+        capacity_length = int(self.vehicle_id.semi_trailer_id.internal_length * 100)
+        capacity_payload = int(self.vehicle_id.semi_trailer_id.payload_capacity)
+        capacity = [capacity_length, capacity_payload]
+        fleet = {}
+        types = [
+            {
+                "id": str(self.vehicle_id.id),
+                "profile": self.vehicle_id.model_id.name,
+                "costs": {
+                    "fixed": 0,
+                    "distance": distance,
+                    "time": 0
+                },
+                "shifts": [
+                    {
+                        "start": {
+                            "time": start_date,
+                            "location": {
+                                "lat": self.start_position.latitude,
+                                "lng": self.start_position.longitude
+                            },
+                            "timeOffset": 7200
+                        }
+                    }
+                ],
+                "capacity": capacity,
+                "limits": {
+                    "shiftTime": 36000
+                },
+                "amount": 1
+            }
+        ]
+
+        profiles = [
+            {
+            "type": self.vehicle_id.model_id.vehicle_type,
+            "name": self.vehicle_id.model_id.name
+            }
+        ]
+        fleet['types'] = types
+        fleet['profiles'] = profiles
+
+        return fleet
+
+    def tour_step_plan(self):
+        start_date = str(self.start_date.isoformat('T') + "Z")
+        end_date = str(self.end_date.isoformat('T') + "Z")
+        plan = {}
+        jobs = []
+        for mo in self.mission_order_ids:
+            cargo_length = int(mo.cargo_length * 100)
+            cargo_payload = int(mo.cargo_payload)
+            demand = [cargo_length, cargo_payload]
+            job = {
+                "id": str(mo.id),
+                "tasks": {
+                    "pickups": [
+                        {
+                            "places": [
+                            {
+                                "times": [
+                                    [
+                                        start_date,
+                                        end_date
+                                    ]
+                                ],
+                                "location": {
+                                    "lat": mo.loading.latitude,
+                                    "lng": mo.loading.longitude
+                                },
+                                "duration": 900,
+                                "tag": str(mo.id)
+                            }
+                            ],
+                            "demand": demand
+                        }
+                    ],
+                    "deliveries": [
+                        {
+                            "places": [
+                                {
+                                    "times": [
+                                        [
+                                            start_date,
+                                            end_date
+                                        ]
+                                    ],
+                                    "location": {
+                                        "lat": mo.delivery.latitude,
+                                        "lng": mo.delivery.longitude
+                                    },
+                                    "duration": 900
+                                }
+                            ],
+                            "demand": demand
+                        }
+                    ]
+                }
+            }
+            jobs.append(job)
+            plan['jobs'] = jobs
+        return plan
+
+    def tour_step_objectives(self):
+        return False   
+
+    def calc_tour_step(self):
+        self.create_steps(json={'statistic': {'cost': 121.57887500000001, 'distance': 381125, 'duration': 28699, 'times': {'driving': 21499, 'serving': 7200, 'waiting': 0, 'stopping': 0, 'break': 0}}, 'tours': [{'vehicleId': '1_1', 'typeId': '1', 'stops': [{'location': {'lat': 45.707, 'lng': 4.85531}, 'time': {'arrival': '2023-08-16T06:00:00Z', 'departure': '2023-08-16T06:00:00Z'}, 'load': [0], 'activities': [{'jobId': 'departure', 'type': 'departure', 'location': {'lat': 45.707, 'lng': 4.85531}, 'time': {'start': '2023-08-16T06:00:00Z', 'end': '2023-08-16T06:00:00Z'}}], 'distance': 0}, {'location': {'lat': 45.75917, 'lng': 4.82965}, 'time': {'arrival': '2023-08-16T06:25:30Z', 'departure': '2023-08-16T06:40:30Z'}, 'load': [600, 15000], 'activities': [{'jobId': '16', 'type': 'pickup', 'jobTag': '16', 'location': {'lat': 45.75917, 'lng': 4.82965}, 'time': {'start': '2023-08-16T06:25:30Z', 'end': '2023-08-16T06:40:30Z'}}], 'distance': 13000}, {'location': {'lat': 45.77077, 'lng': 4.9587}, 'time': {'arrival': '2023-08-16T07:13:18Z', 'departure': '2023-08-16T07:28:18Z'}, 'load': [900, 17000], 'activities': [{'jobId': '5', 'type': 'pickup', 'jobTag': '5', 'location': {'lat': 45.77077, 'lng': 4.9587}, 'time': {'start': '2023-08-16T07:13:18Z', 'end': '2023-08-16T07:28:18Z'}}], 'distance': 36999}, {'location': {'lat': 45.662, 'lng': 5.08079}, 'time': {'arrival': '2023-08-16T07:57:18Z', 'departure': '2023-08-16T08:12:18Z'}, 'load': [1100, 23000], 'activities': [{'jobId': '11', 'type': 'pickup', 'jobTag': '11', 'location': {'lat': 45.662, 'lng': 5.08079}, 'time': {'start': '2023-08-16T07:57:18Z', 'end': '2023-08-16T08:12:18Z'}}], 'distance': 59013}, {'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'arrival': '2023-08-16T08:36:05Z', 'departure': '2023-08-16T08:51:05Z'}, 'load': [900, 17000], 'activities': [{'jobId': '11', 'type': 'delivery', 'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'start': '2023-08-16T08:36:05Z', 'end': '2023-08-16T08:51:05Z'}}], 'distance': 73656}, {'location': {'lat': 44.93045, 'lng': 4.88924}, 'time': {'arrival': '2023-08-16T10:14:54Z', 'departure': '2023-08-16T10:29:54Z'}, 'load': [600, 15000], 'activities': [{'jobId': '5', 'type': 'delivery', 'location': {'lat': 44.93045, 'lng': 4.88924}, 'time': {'start': '2023-08-16T10:14:54Z', 'end': '2023-08-16T10:29:54Z'}}], 'distance': 173798}, {'location': {'lat': 43.96189, 'lng': 4.85993}, 'time': {'arrival': '2023-08-16T12:04:38Z', 'departure': '2023-08-16T12:34:38Z'}, 'load': [900, 17000], 'activities': [{'jobId': '16', 'type': 'delivery', 'location': {'lat': 43.96189, 'lng': 4.85993}, 'time': {'start': '2023-08-16T12:04:38Z', 'end': '2023-08-16T12:19:38Z'}}, {'jobId': '6', 'type': 'pickup', 'jobTag': '6', 'location': {'lat': 43.96189, 'lng': 4.85993}, 'time': {'start': '2023-08-16T12:19:38Z', 'end': '2023-08-16T12:34:38Z'}}], 'distance': 297260}, {'location': {'lat': 43.52638, 'lng': 5.44614}, 'time': {'arrival': '2023-08-16T13:43:19Z', 'departure': '2023-08-16T13:58:19Z'}, 'load': [0, 0], 'activities': [{'jobId': '6', 'type': 'delivery', 'location': {'lat': 43.52638, 'lng': 5.44614}, 'time': {'start': '2023-08-16T13:43:19Z', 'end': '2023-08-16T13:58:19Z'}}], 'distance': 381125}], 'statistic': {'cost': 121.57887500000001, 'distance': 381125, 'duration': 28699, 'times': {'driving': 21499, 'serving': 7200, 'waiting': 0, 'stopping': 0, 'break': 0}}, 'shiftIndex': 0}]})
+        return
+        token = self.getAuthToken()
+        body = {}
+
+        configuration = self.tour_step_configuration()
+        fleet = self.tour_step_fleet()
+        plan = self.tour_step_plan()
+        objectives = self.tour_step_objectives()
+
+        if plan:
+            body["plan"] = plan
+        if fleet:
+            body["fleet"] = fleet
+        if objectives:
+            body["objectives"] = objectives
+        if configuration:
+            body["configuration"] = configuration
+        print(body)
+        url = "https://tourplanning.hereapi.com/v3/problems"
+        autorization = "Bearer " + token
+        print(autorization)
+        headers = {
+            "Authorization": autorization,
+            "Content-Type": "application/json"
+        }
+
+        response = post(url, json=body, headers=headers)
+        if response.status_code == 200:
+            self.create_steps(json={'statistic': {'cost': 121.57887500000001, 'distance': 381125, 'duration': 28699, 'times': {'driving': 21499, 'serving': 7200, 'waiting': 0, 'stopping': 0, 'break': 0}}, 'tours': [{'vehicleId': '1_1', 'typeId': '1', 'stops': [{'location': {'lat': 45.707, 'lng': 4.85531}, 'time': {'arrival': '2023-08-16T06:00:00Z', 'departure': '2023-08-16T06:00:00Z'}, 'load': [0], 'activities': [{'jobId': 'departure', 'type': 'departure', 'location': {'lat': 45.707, 'lng': 4.85531}, 'time': {'start': '2023-08-16T06:00:00Z', 'end': '2023-08-16T06:00:00Z'}}], 'distance': 0}, {'location': {'lat': 45.75917, 'lng': 4.82965}, 'time': {'arrival': '2023-08-16T06:25:30Z', 'departure': '2023-08-16T06:40:30Z'}, 'load': [600, 15000], 'activities': [{'jobId': '16', 'type': 'pickup', 'jobTag': '16', 'location': {'lat': 45.75917, 'lng': 4.82965}, 'time': {'start': '2023-08-16T06:25:30Z', 'end': '2023-08-16T06:40:30Z'}}], 'distance': 13000}, {'location': {'lat': 45.77077, 'lng': 4.9587}, 'time': {'arrival': '2023-08-16T07:13:18Z', 'departure': '2023-08-16T07:28:18Z'}, 'load': [900, 17000], 'activities': [{'jobId': '5', 'type': 'pickup', 'jobTag': '5', 'location': {'lat': 45.77077, 'lng': 4.9587}, 'time': {'start': '2023-08-16T07:13:18Z', 'end': '2023-08-16T07:28:18Z'}}], 'distance': 36999}, {'location': {'lat': 45.662, 'lng': 5.08079}, 'time': {'arrival': '2023-08-16T07:57:18Z', 'departure': '2023-08-16T08:12:18Z'}, 'load': [1100, 23000], 'activities': [{'jobId': '11', 'type': 'pickup', 'jobTag': '11', 'location': {'lat': 45.662, 'lng': 5.08079}, 'time': {'start': '2023-08-16T07:57:18Z', 'end': '2023-08-16T08:12:18Z'}}], 'distance': 59013}, {'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'arrival': '2023-08-16T08:36:05Z', 'departure': '2023-08-16T08:51:05Z'}, 'load': [900, 17000], 'activities': [{'jobId': '11', 'type': 'delivery', 'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'start': '2023-08-16T08:36:05Z', 'end': '2023-08-16T08:51:05Z'}}], 'distance': 73656}, {'location': {'lat': 44.93045, 'lng': 4.88924}, 'time': {'arrival': '2023-08-16T10:14:54Z', 'departure': '2023-08-16T10:29:54Z'}, 'load': [600, 15000], 'activities': [{'jobId': '5', 'type': 'delivery', 'location': {'lat': 44.93045, 'lng': 4.88924}, 'time': {'start': '2023-08-16T10:14:54Z', 'end': '2023-08-16T10:29:54Z'}}], 'distance': 173798}, {'location': {'lat': 43.96189, 'lng': 4.85993}, 'time': {'arrival': '2023-08-16T12:04:38Z', 'departure': '2023-08-16T12:34:38Z'}, 'load': [900, 17000], 'activities': [{'jobId': '16', 'type': 'delivery', 'location': {'lat': 43.96189, 'lng': 4.85993}, 'time': {'start': '2023-08-16T12:04:38Z', 'end': '2023-08-16T12:19:38Z'}}, {'jobId': '6', 'type': 'pickup', 'jobTag': '6', 'location': {'lat': 43.96189, 'lng': 4.85993}, 'time': {'start': '2023-08-16T12:19:38Z', 'end': '2023-08-16T12:34:38Z'}}], 'distance': 297260}, {'location': {'lat': 43.52638, 'lng': 5.44614}, 'time': {'arrival': '2023-08-16T13:43:19Z', 'departure': '2023-08-16T13:58:19Z'}, 'load': [0, 0], 'activities': [{'jobId': '6', 'type': 'delivery', 'location': {'lat': 43.52638, 'lng': 5.44614}, 'time': {'start': '2023-08-16T13:43:19Z', 'end': '2023-08-16T13:58:19Z'}}], 'distance': 381125}], 'statistic': {'cost': 121.57887500000001, 'distance': 381125, 'duration': 28699, 'times': {'driving': 21499, 'serving': 7200, 'waiting': 0, 'stopping': 0, 'break': 0}}, 'shiftIndex': 0}]})
+        print(response.status_code)
+        print(response.json()) 
 
     def calc_full_routes(self):
         token = self.getAuthToken()

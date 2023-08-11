@@ -31,6 +31,7 @@
                             <field name="tour_step_count" class="o_stat_value"/>
                             <span class="o_stat_text">Steps</span>
                         </button>
+                        <button class="oe_stat_button" name="calc_tour_step" string="Calculate Tour" type="object" icon="fa-pin"/>
                         <button class="oe_stat_button" name="calc_full_routes" string="Calculate Routes" type="object" icon="fa-road"/>
                         <button class="oe_stat_button" name="google_map_url" string="Google map" type="object" icon="fa-map"/>
                     </div>
@@ -46,6 +47,10 @@
                     <group col="4">
                         <field name="vehicle_id"/>
                         <field name="driver_id" readonly="1"/>
+                    </group>
+                    <group col="4">
+                        <field name="start_position"/>
+                        <field name="end_position"/>
                     </group>
                     <group>
                         <field name="note"/>
