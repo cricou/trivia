@@ -6,7 +6,8 @@ ACTIVITY_TYPE=[
     ('arrival', "Arrival"),
     ('pickup', "Pickup"),
     ('delivery', "Delivery"),
-    ('break', "Break")
+    ('break', "Break"),
+    ('reload', "Reload")
 ]
 
 STATE=[
@@ -21,7 +22,7 @@ class TriviaTourStep(models.Model):
     _inherit = ['mail.thread']
     _order = 'sequence'
 
-    name = fields.Char(string="Name")
+    name = fields.Char(string="Name", compute='_compute_name', store="True")
     sequence = fields.Integer(string="Sequence")
     tour_id = fields.Many2one('trivia.tour')
     mission_order_id = fields.Many2one('mission.order')
@@ -36,11 +37,17 @@ class TriviaTourStep(models.Model):
     full_address = fields.Char(string="Full Address")
     note = fields.Text(string="Note")
     state = fields.Selection(selection=STATE, default='draft')
+    vehicle_id = fields.Many2one('fleet.vehicle')
+
+    @api.depends('activity_type', 'full_address')
+    def _compute_name(self):
+        for rec in self:
+            if rec.full_address:
+                rec.name = "%s - %s" % (rec.activity_type,rec.full_address)
 
     @api.onchange('mission_order_id', 'activity_type')
     def _get_full_address(self):
         if self.mission_order_id and self.activity_type:
-            print("ezaez")
             if self.activity_type == 'pickup':
                 self.full_address = self.mission_order_id.loading.full_address
             elif self.activity_type == 'delivery':

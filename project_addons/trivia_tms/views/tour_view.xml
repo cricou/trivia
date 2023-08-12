@@ -31,7 +31,7 @@
                             <field name="tour_step_count" class="o_stat_value"/>
                             <span class="o_stat_text">Steps</span>
                         </button>
-                        <button class="oe_stat_button" name="calc_tour_step" string="Calculate Tour" type="object" icon="fa-pin"/>
+                        <button class="oe_stat_button" name="calc_tour_step" string="Calculate Tour" type="object" icon="fa-map-marker"/>
                         <button class="oe_stat_button" name="calc_full_routes" string="Calculate Routes" type="object" icon="fa-road"/>
                         <button class="oe_stat_button" name="google_map_url" string="Google map" type="object" icon="fa-map"/>
                     </div>
