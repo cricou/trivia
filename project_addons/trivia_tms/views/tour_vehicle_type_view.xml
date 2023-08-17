@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tms_trivia_tour_vehicle_type_tree" model="ir.ui.view">
+        <field name="name">trivia.tour.vehicle.type.tree</field>
+        <field name="model">trivia.tour.vehicle.type</field>
+        <field name="arch" type="xml">
+            <tree string="Vehicle Type">
+                <field name="name"/>
+                <field name="profile_id"/>
+                <field name="capacity"/>
+                <field name="skill_ids" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="tms_trivia_tour_vehicle_type_form" model="ir.ui.view">
+        <field name="name">trivia.tour.vehicle.type.form</field>
+        <field name="model">trivia.tour.vehicle.type</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Vehicle Type">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="profile_id"/>
+                        <field name="fixed_cost"/>
+                        <field name="distance_cost"/>
+                        <field name="time_cost"/>
+                        <field name="capacity"/>
+                        <field name="skill_ids" widget="many2many_tags"/>
+                        <field name="vehicle_ids" widget="many2many_tags"/>
+                        <field name="capacity"/>
+                    </group>
+                </sheet>
+            </form>
+            
+        </field>
+    </record>
+
+    <record id="tms_trivia_tour_vehicle_type_action" model="ir.actions.act_window">
+        <field name="name">Vehicle Type</field>
+        <field name="res_model">trivia.tour.vehicle.type</field>
+        <field name="view_id" ref="trivia_tms.tms_trivia_tour_vehicle_type_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Set a new Vehicle Type
+          </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_tms_trivia_tour_vehicle_type_menu"
+        parent="menu_settings_tour"
+        action="tms_trivia_tour_vehicle_type_action"
+        sequence="10"/>
+
+</odoo>

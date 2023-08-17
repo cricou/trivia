@@ -19,6 +19,9 @@
         'views/semi_trailer_view.xml',
         'views/fleet_vehicle_view.xml',
         'views/tour_step_view.xml',
+        'views/tour_skill_view.xml',
+        'views/tour_profile_view.xml',
+        'views/tour_vehicle_type_view.xml'
     ],
     'demo': [
     ],

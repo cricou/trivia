@@ -14,6 +14,15 @@ MO_STATUS=[
     ('done', "Done")
 ]
 
+PAYMENT_STATE=[
+        ('not_paid', 'Not Paid'),
+        ('in_payment', 'In Payment'),
+        ('paid', 'Paid'),
+        ('partial', 'Partially Paid'),
+        ('reversed', 'Reversed'),
+        ('invoicing_legacy', 'Invoicing App Legacy')
+]
+
 class MissionOrder(models.Model):
     _name = 'mission.order'
     _description = 'Mission Order'
@@ -25,9 +34,11 @@ class MissionOrder(models.Model):
     date = fields.Date(string="Order date",
                        default=lambda self: fields.Date.today())
     loading = fields.Many2one('point.of.interest', string="Loading")
-    loading_date = fields.Datetime(string="Loading date")
+    loading_start_date = fields.Datetime(string="Loading Start Date")
+    loading_end_date = fields.Datetime(string="Loading End Date")
     delivery = fields.Many2one('point.of.interest', string="Delivery")
-    delivery_date = fields.Datetime(string="Delivery date")
+    delivery_start_date = fields.Datetime(string="Delivery Start Date")
+    delivery_end_date = fields.Datetime(string="Delivery End Date")
     note = fields.Text(string="Note")
     state = fields.Selection(selection=MO_STATUS, default="draft")
     #Route
@@ -52,7 +63,10 @@ class MissionOrder(models.Model):
     reserved_length = fields.Float(string="Reserved Length", compute='_calc_reserved_length')
     reserved_payload = fields.Float(string="Reserved Payload", compute='_calc_reserved_payload')
 
-    partner_id = fields.Many2one('res.partner')
+    partner_id = fields.Many2one('res.partner', string="Custormer")
+    partner_phone = fields.Char(related="partner_id.phone")
+    partner_email = fields.Char(related="partner_id.email")
+                    
 
     @api.model
     def create(self, values):

@@ -11,6 +11,7 @@ import hashlib
 import random
 import time
 from datetime import datetime
+import os
 
 class TriviaTour(models.Model):
     _name = 'trivia.tour'
@@ -64,11 +65,10 @@ class TriviaTour(models.Model):
         return super(TriviaTour, self).create(values)
 
     def getAuthToken(self):
-        access_key = "mxg_lw8VElp8LZyVcrAQ0Q"
-        access_secret = "ruSop9w5cuDfIAx-0yz-PZl6Sfg3-oe8vXvP1f31m6EyWS2_xl6ELW7zgTLJJ8xMarDn_4Nn7_Q5HMsagmt5Lw"
-        scope = "hrn:here:authorization::org779535579:project/1652447479575"
+        access_key = os.environ['HERE_ACCESS_KEY_ID']
+        access_secret = os.environ['HERE_ACCESS_KEY_SECRET']
 
-        url = "https://account.api.here.com/oauth2/token"  # Remplacez par l'URL réelle de votre endpoint
+        url = "https://account.api.here.com/oauth2/token"  
 
         # Génération d'une chaîne aléatoire pour oauth_nonce
         oauth_nonce = ''.join([random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') for i in range(32)])
@@ -208,9 +208,9 @@ class TriviaTour(models.Model):
                 "id": str(self.vehicle_id.id),
                 "profile": self.vehicle_id.model_id.name,
                 "costs": {
-                    "fixed": 0,
+                    "fixed": 13.0,
                     "distance": distance,
-                    "time": 0
+                    "time": 0.009
                 },
                 "shifts": [
                     {
@@ -226,7 +226,7 @@ class TriviaTour(models.Model):
                 ],
                 "capacity": capacity,
                 "limits": {
-                    "shiftTime": 36000
+                    "shiftTime": 54000
                 },
                 "amount": 1
             }
@@ -256,12 +256,17 @@ class TriviaTour(models.Model):
     def tour_step_plan(self):
         start_date = str(self.start_date.isoformat('T') + "Z")
         end_date = str(self.end_date.isoformat('T') + "Z")
+        
         plan = {}
         jobs = []
         for mo in self.mission_order_ids:
             cargo_length = int(mo.cargo_length * 100)
             cargo_payload = int(mo.cargo_payload)
             demand = [cargo_length, cargo_payload]
+            loading_start_date = str(mo.loading_start_date.isoformat('T') + "Z")
+            loading_end_date = str(mo.loading_end_date.isoformat('T') + "Z")
+            delivery_end_date = str(mo.delivery_end_date.isoformat('T') + "Z")
+            delivery_start_date = str(mo.delivery_start_date.isoformat('T') + "Z")
             job = {
                 "id": str(mo.id),
                 "tasks": {
@@ -271,8 +276,8 @@ class TriviaTour(models.Model):
                             {
                                 "times": [
                                     [
-                                        start_date,
-                                        end_date
+                                        loading_start_date,
+                                        loading_end_date
                                     ]
                                 ],
                                 "location": {
@@ -292,15 +297,16 @@ class TriviaTour(models.Model):
                                 {
                                     "times": [
                                         [
-                                            start_date,
-                                            end_date
+                                            delivery_start_date,
+                                            delivery_end_date
                                         ]
                                     ],
                                     "location": {
                                         "lat": mo.delivery.latitude,
                                         "lng": mo.delivery.longitude
                                     },
-                                    "duration": 900
+                                    "duration": 900,
+                                    "tag": str(mo.id)
                                 }
                             ],
                             "demand": demand
@@ -350,93 +356,9 @@ class TriviaTour(models.Model):
         print(response.json()) 
 
     def calc_full_routes(self):
-        token = self.getAuthToken()
-        print(token)
-        # get signature
         truck_fuel_consumption = self.env['ir.config_parameter'].sudo().get_param('trivia_tms.truck_fuel_consumption')
         fuel_cost = self.env['ir.config_parameter'].sudo().get_param('trivia_tms.fuel_cost')
-        # Define new data to create
-
-        # encoded_url = """grant_type=client_credentials&scope=hrn:here:authorization::org779535579:project/1652447479575&oauth_consumer_key=mxg_lw8VElp8LZyVcrAQ0Q&oauth_nonce=LIIpk4&oauth_signature_method=HMAC-SHA256&oauth_timestamp=1456945283&oauth_version=1.0"""
-        # encoded_url = urllib.parse.quote_plus(encoded_url)
-
-        # print(token.json())
-        body = {
-                "plan": {
-                    "jobs": [
-                    {
-                        "id": "myJob",
-                        "tasks": {
-                        "deliveries": [
-                            {
-                            "places": [
-                                {
-                                "location": {"lat": 52.46642, "lng": 13.28124},
-                                "times": [["2023-08-11T10:00:00.000Z","2023-08-11T12:00:00.000Z"]],
-                                "duration": 180
-                                }
-                            ],
-                            "demand": [1]
-                            }
-                        ]
-                        }
-                    }
-                    ]
-                },
-                "fleet": {
-                    "types": [
-                    {
-                        "id": "myVehicleType",
-                        "profile": "normal_car",
-                        "costs": {
-                        "distance": 0.0002,
-                        "time": 0.005,
-                        "fixed": 22
-                        },
-                        "shifts": [{
-                        "start": {
-                            "time": "2023-08-11T09:00:00Z",
-                            "location": {"lat": 52.52568, "lng": 13.45345}
-                        },
-                        "end": {
-                            "time": "2023-08-11T18:00:00Z",
-                            "location": {"lat": 52.52568, "lng": 13.45345}
-                        }
-                        }],
-                        "limits": {
-                        "maxDistance": 300000,
-                        "shiftTime": 28800
-                        },
-                        "capacity": [10],
-                        "amount": 1
-                    }
-                    ],
-                    "profiles": [{
-                    "name": "normal_car",
-                    "type": "car",
-                    "departureTime": "2023-08-11T09:15:00Z"
-                    }]
-                },
-                "configuration": {
-                    "termination": {
-                    "maxTime": 2,
-                    "stagnationTime": 1
-                    }
-                }
-                }
-        url = "https://tourplanning.hereapi.com/v3/problems"
-        autorization = "Bearer " + token
-        print(autorization)
-        headers = {
-            "Authorization": autorization,
-            "Content-Type": "application/json"
-        }
-
-        # Print the response
-        response = post(url, json=body, headers=headers)
-
-        print(response.status_code)
-        print(response.json())
+        
         #for mo in self.mission_order_ids:
 
         # mo_len = len(self.mission_order_ids) - 1

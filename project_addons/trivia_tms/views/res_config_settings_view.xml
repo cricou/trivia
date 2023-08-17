@@ -37,10 +37,11 @@
                                 
                             </div>
                         </div>
-                        <h2>Truck configuration</h2>
+                        <h2>Truck Configuration</h2>
                         <div class="row mt16 o_settings_container">
                             <div class="col-8 col-lg-12 o_setting_box">
-                                <div class="o_setting_left_pane"/>
+                                <div class="o_setting_left_pane">
+                                </div>
                                 <div class="o_setting_right_pane">
                                     <span class="o_form_label">Trucks fuel consumption</span>
                                     <div class="text-muted">
@@ -55,6 +56,77 @@
                                     </div>
                                     <div class="text-muted">
                                         <field name="fuel_cost"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <h2>Tour Planning Default Values</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-8 col-lg-12 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <span class="o_form_label">Shift Start/End Times</span>
+                                    <div class="text-muted">
+                                        Represent the maximum time window for a shift
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="row mt16">
+                                            <label string="Start" for="tp_shift_start" class="col-lg-1 o_light_label"/>
+                                            <field name="tp_shift_start" widget="float_time"/>
+                                        </div>
+                                        <div class="row">
+                                            <label string="End" for="tp_shift_end" class="col-lg-1 o_light_label"/>
+                                            <field name="tp_shift_end" widget="float_time"/>
+                                        </div>
+                                    </div>
+                                    <span class="o_form_label">Shift Offset Start</span>
+                                    <div class="text-muted">
+                                        Represent the time allowed to the driver before start (if it's possible in the tour)
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="tp_shift_offset_start" widget="float_time"/>
+                                    </div>
+                                    <span class="o_form_label">Shift Time</span>
+                                    <div class="text-muted">
+                                        Defines the maximum allowed working time of a driver
+                                    </div>
+                                    <div class="text-muted">
+                                        <field name="tp_shift_time" widget="float_time"/>
+                                    </div>
+
+                                    <span class="o_form_label">Shift Locations Start/End</span>
+                                    <div class="text-muted">
+                                        Represent the place the shift must Start and End
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="row mt16">
+                                            <label string="Start" for="tp_shift_location_start" class="col-lg-1 o_light_label"/>
+                                            <field name="tp_shift_location_start"/>
+                                        </div>
+                                        <div class="row">
+                                            <label string="End" for="tp_shift_location_end" class="col-lg-1 o_light_label"/>
+                                            <field name="tp_shift_location_end"/>
+                                        </div>
+                                    </div>
+
+                                    <span class="o_form_label">Shift Breaks Start/End</span>
+                                    <div class="text-muted">
+                                        The time window for a break and the duration of the break
+                                    </div>
+                                    <div class="content-group">
+                                        <div class="row mt16">
+                                            <label string="Start" for="tp_break_timewindow_start" class="col-lg-1 o_light_label"/>
+                                            <field name="tp_break_timewindow_start" widget="float_time"/>
+                                        </div>
+                                        <div class="row">
+                                            <label string="End" for="tp_break_timewindow_end" class="col-lg-1 o_light_label"/>
+                                            <field name="tp_break_timewindow_end" widget="float_time"/>
+                                        </div>
+                                        <div class="row">
+                                            <label string="Duration" for="tp_break_duration" class="col-lg-1 o_light_label"/>
+                                            <field name="tp_break_duration" widget="float_time"/>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
