@@ -6,9 +6,9 @@
         <field name="arch" type="xml">
             <tree string="Vehicle Type">
                 <field name="name"/>
-                <field name="profile_id"/>
+                <field name="tour_profile_id"/>
                 <field name="capacity"/>
-                <field name="skill_ids" widget="badge"/>
+                <field name="tour_skill_ids" widget="many2many_tags"/>
             </tree>
         </field>
     </record>
@@ -22,12 +22,12 @@
                 <sheet>
                     <group>
                         <field name="name"/>
-                        <field name="profile_id"/>
+                        <field name="tour_profile_id"/>
                         <field name="fixed_cost"/>
                         <field name="distance_cost"/>
                         <field name="time_cost"/>
                         <field name="capacity"/>
-                        <field name="skill_ids" widget="many2many_tags"/>
+                        <field name="tour_skill_ids" widget="many2many_tags"/>
                         <field name="vehicle_ids" widget="many2many_tags"/>
                         <field name="capacity"/>
                     </group>

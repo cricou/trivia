@@ -23,10 +23,10 @@ class ResConfigSettings(models.TransientModel):
     tp_shift_end = fields.Float(string="Shift End",
                                 config_parameter="trivia_tms.tp_shift_end")
     tp_shift_location_start = fields.Many2one('point.of.interest', 
-                                              string="Location",
+                                              string="Start Location",
                                               config_parameter='trivia_tms.tp_shift_location_start')
     tp_shift_location_end = fields.Many2one('point.of.interest',
-                                            string="Location",
+                                            string="End Location",
                                             config_parameter='trivia_tms.tp_shift_location_end')
     tp_shift_offset_start = fields.Float(string="Departure Time Offset",
                                         config_parameter='trivia_tms.tp_shift_offset_start')

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- STAGES TREE VIEW + MUTI_EDIT -->
+    <record id="tms_trivia_tour_plan_fleet_tree" model="ir.ui.view">
+        <field name="name">trivia.tour.plan.fleet.tree</field>
+        <field name="model">trivia.tour.plan.fleet</field>
+        <field name="arch" type="xml">
+            <tree string="Profiles">
+                <field name="tour_vehicle_type_id"/>
+                <field name="tour_profile_id"/>
+                <field name="vehicle_ids"/>
+                <field name="vehicle_amount"/>
+                <field name="is_external_fleet" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="tms_trivia_tour_plan_fleet_form" model="ir.ui.view">
+        <field name="name">trivia.tour.plan.fleet.form</field>
+        <field name="model">trivia.tour.plan.fleet</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Profiles">
+                <sheet>
+                    <field name="name"/>
+                    <group col="4">
+                        <field name="tour_vehicle_type_id"/>
+                        <div>
+                            <span class="oe_inline">My Vehicles </span>
+                            <field name="is_external_fleet" widget="boolean_toggle"/>
+                            <span class="oe_inline">External Vehicles</span>
+                        </div>
+                    </group>
+                    <group col="4">
+                        <field name="tour_profile_id"/>
+                    </group>
+                    <group attrs="{'invisible':[('is_external_fleet','=', True)]}" string="Vehicles">
+                        <field name="vehicle_ids" nolabel="1"/>
+                    </group>
+                    <group attrs="{'invisible':[('is_external_fleet','=', False)]}">
+                        <field name="vehicle_amount" />
+                    </group>
+                    <group col="4">
+                    </group>
+                    <group string="Shifts">
+                        <field name="tour_plan_fleet_shift_ids" nolabel="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Settings">
+                            <group col="4">
+                                <field name="shift_time" widget="float_time"/>
+                            </group>
+                            <group  col="4">
+                                <field name="break_timewindow_start" widget="float_time"/>
+                                <field name="break_timewindow_end" widget="float_time"/>
+                                <field name="break_duration" widget="float_time"/>
+                            </group>
+                            <group  col="4">
+                                <field name="stop_base_duration" widget="float_time"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- <record id="tms_trivia_tour_plan_fleet_action" model="ir.actions.act_window">
+        <field name="name">Profiles</field>
+        <field name="res_model">trivia.tour.plan.fleet</field>
+        <field name="view_id" ref="trivia_tms.tms_trivia_tour_plan_fleet_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Set a new profile
+          </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_tms_trivia_tour_plan_fleet_menu"
+        parent="menu_settings_tour"
+        action="tms_trivia_tour_plan_fleet_action"
+        sequence="15"/> -->
+
+</odoo>

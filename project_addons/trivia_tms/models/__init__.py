@@ -10,3 +10,6 @@ from . import tour_step
 from . import tour_skill
 from . import tour_profile
 from . import tour_vehicle_type
+from . import tour_plan_fleet_shift
+from . import tour_plan_fleet
+from . import tour_plan

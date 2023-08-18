@@ -42,6 +42,8 @@ class TriviaTour(models.Model):
     tour_step_ids = fields.One2many('trivia.tour.step', 'tour_id', string="Tour Steps")
     tour_step_count = fields.Integer(compute='_calc_tour_step_count')
 
+    tour_plan_id = fields.Many2one('trivia.tour.plan')
+
     def _calc_tour_step_count(self):
         self.ensure_one()
         for rec in self:

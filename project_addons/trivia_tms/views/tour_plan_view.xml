@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- STAGES TREE VIEW + MUTI_EDIT -->
+    <record id="tms_trivia_tour_plan_tree" model="ir.ui.view">
+        <field name="name">trivia.tour.plan.tree</field>
+        <field name="model">trivia.tour.plan</field>
+        <field name="arch" type="xml">
+            <tree string="Tour Plan">
+                <field name="name"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="mission_order_ids"/>
+                <field name="note"/>
+                <field name="tour_ids"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="tms_trivia_tour_plan_form" model="ir.ui.view">
+        <field name="name">trivia.tour.plan.form</field>
+        <field name="model">trivia.tour.plan</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Tour Plan">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="open_tour"
+                                type="object" class="oe_stat_button" icon="fa-list">
+                            <field name="tour_count" class="o_stat_value"/>
+                            <span class="o_stat_text">Tours</span>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <label for="start_date" string="Date"/>
+                    <div class="o_row">
+                        <field name="start_date" widget="daterange" nolabel="1" class="oe_inline" options="{'related_end_date': 'end_date'}"/>
+                        <i class="fa fa-long-arrow-right mx-2" aria-label="Arrow icon" title="Arrow"/>
+                        <field name="end_date" widget="daterange" nolabel="1" class="oe_inline" options="{'related_start_date': 'start_date'}"/>
+                    </div>
+                    <group>
+                        <field name="note"/>
+                    </group>
+                    <group string="Fleets">
+                        <field name="tour_plan_fleet_ids" 
+                               nolabel="1"
+                               context="{'parent_id': active_id, 'parent_model': 'trivia.tour.plan'}"/>
+                    </group>
+                    <group string="Missions Order">
+                        <field name="mission_order_ids" nolabel="1">
+                            <tree string="Missions order">
+                                <field name="name" />
+                                <field name="loading"/>
+                                <field name="delivery"/>
+                                <field name="distance" sum="Total Distances"/>
+                                <field name="total_cost" sum="Total Costs"/>
+                            </tree>
+                        </field>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="tms_trivia_tour_plan_action" model="ir.actions.act_window">
+        <field name="name">Tour Plan</field>
+        <field name="res_model">trivia.tour.plan</field>
+        <field name="view_id" ref="trivia_tms.tms_trivia_tour_plan_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Set a new profile
+          </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_tms_trivia_tour_plan_menu"
+        parent="menu_tour_main"
+        action="tms_trivia_tour_plan_action"
+        sequence="5"/>
+
+</odoo>
