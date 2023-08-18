@@ -36,7 +36,11 @@
         <field name="arch" type="xml">
             <form string="Mission orders">
                 <header>
-                    <button name="action_create_invoice" string="Create invoice" type="object" class="btn-primary" attrs="{'invisible':['|',('state','!=','done'),('account_move_id','!=', False)]}"/>
+                    <button name="action_create_invoice"
+                            string="Create invoice"
+                            type="object"
+                            class="btn-primary"
+                            attrs="{'invisible':['|',('state','!=','done'),('account_move_id','!=', False)]}"/>
                     <field name="state" widget="statusbar" clickable="1"/>
                 </header>
                 <sheet>

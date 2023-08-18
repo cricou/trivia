@@ -29,7 +29,6 @@
                         <field name="capacity"/>
                         <field name="tour_skill_ids" widget="many2many_tags"/>
                         <field name="vehicle_ids" widget="many2many_tags"/>
-                        <field name="capacity"/>
                     </group>
                 </sheet>
             </form>

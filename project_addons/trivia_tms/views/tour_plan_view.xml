@@ -23,6 +23,13 @@
         <field name="priority" eval="1"/>
         <field name="arch" type="xml">
             <form string="Tour Plan">
+                <header>
+                    <button name="action_calc_tour_plan"
+                            string="Calculate"
+                            type="object"
+                            class="btn-primary"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="open_tour"
