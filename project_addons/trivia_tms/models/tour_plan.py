@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
 from odoo.addons.trivia_tms.tutils import Tutils
+from requests import get, post, HTTPError, utils
+import http.client
+import json
+from json import dumps
 
 STATE=[
     ('draft', "Draft"),
@@ -72,13 +76,14 @@ class TriviaTourPlan(models.Model):
         v_type = fleet.tour_vehicle_type_id
         profile = fleet.tour_vehicle_type_id.tour_profile_id
         shift_time = Tutils.convert_float_time_to_second(fleet.shift_time)
+        break_duration = Tutils.convert_float_time_to_second(fleet.break_duration)
         try:
             capacity = eval(v_type.capacity)
         except:
             capacity = [1]
 
         type_obj = {
-                "id": str(v_type.id),
+                "id": "%s-%s" % (v_type.id,fleet.is_external_fleet),
                 "profile": profile.name,
                 "costs": {
                     "fixed": v_type.fixed_cost,
@@ -96,13 +101,23 @@ class TriviaTourPlan(models.Model):
         else:
             vehicles = []
             for vehicle in fleet.vehicle_ids:
-                vehicles.append("fleet.vehicle,%s" % vehicle.id)
+                vehicles.append("fleet_vehicle-%s" % vehicle.id)
             type_obj['vehicleIds'] = vehicles
         if v_type.tour_skill_ids:
             skills = []
             for skill in v_type.tour_skill_ids:
                 skills.append(skill.name)
             type_obj['skills'] = skills
+
+        #TODO ADD BREAK
+        # breaks = []
+        
+        # shift_break = {
+        #     "duration": break_duration,
+        #     "times":[
+
+        #     ]
+        # }
 
         shifts = []
         for shift in fleet.tour_plan_fleet_shift_ids:
@@ -112,9 +127,10 @@ class TriviaTourPlan(models.Model):
                     "location": {
                         "lat": shift.shift_location_start.latitude,
                         "lng": shift.shift_location_start.longitude
-                    }
+                    },
+                    "timeOffset": Tutils.convert_float_time_to_second(shift.shift_offset_start) or 0
                 },
-                "timeOffset": shift.shift_offset_start or 0
+                
             }
             if shift.end_date and shift.shift_location_end:
                 obj['end'] = {
@@ -125,6 +141,7 @@ class TriviaTourPlan(models.Model):
                     }
                 }
             shifts.append(obj)
+        type_obj["shifts"] = shifts
         profile_obj = {
             "type": profile.profile_type,
             "name": profile.name
@@ -151,15 +168,82 @@ class TriviaTourPlan(models.Model):
 
         return fleet_result
 
+    def tour_step_plan_jobs(self, mo):
+        cargo_length = int(mo.cargo_length)
+        cargo_payload = int(mo.cargo_payload)
+        demand = [cargo_length, cargo_payload]
+        loading_start_date = Tutils.convert_datetime_to_isoformat(mo.loading_start_date)
+        loading_end_date = Tutils.convert_datetime_to_isoformat(mo.loading_end_date)
+        delivery_end_date = Tutils.convert_datetime_to_isoformat(mo.delivery_end_date)
+        delivery_start_date = Tutils.convert_datetime_to_isoformat(mo.delivery_start_date)
+
+        job = {
+                "id": str("mission_order-%s" % mo.id),
+                "tasks": {
+                    "pickups": [
+                        {
+                            "places": [
+                            {
+                                "times": [
+                                    [
+                                        loading_start_date,
+                                        loading_end_date
+                                    ]
+                                ],
+                                "location": {
+                                    "lat": mo.loading.latitude,
+                                    "lng": mo.loading.longitude
+                                },
+                                "duration": 60,
+                                "tag": str(mo.id)
+                            }
+                            ],
+                            "demand": demand
+                        }
+                    ],
+                    "deliveries": [
+                        {
+                            "places": [
+                                {
+                                    "times": [
+                                        [
+                                            delivery_start_date,
+                                            delivery_end_date
+                                        ]
+                                    ],
+                                    "location": {
+                                        "lat": mo.delivery.latitude,
+                                        "lng": mo.delivery.longitude
+                                    },
+                                    "duration": 60,
+                                    "tag": str(mo.id)
+                                }
+                            ],
+                            "demand": demand
+                        }
+                    ]
+                }
+            }
+        return job
+
+
     def tour_step_plan(self):
-        return False
+        plan_result = {}
+        jobs = []
+        for mo in self.mission_order_ids:
+            result = self.tour_step_plan_jobs(mo)
+            jobs.append(result)
+        plan_result['jobs'] = jobs
+
+        return plan_result
 
     def tour_step_objectives(self):
         return False
 
     def action_calc_tour_plan(self):
         body = {}
-        # token = Tutils.getHereAuthToken()
+        token = Tutils.getHereAuthToken()
+        print(token)
         configuration = self.tour_step_configuration()
         fleet = self.tour_step_fleet()
         plan = self.tour_step_plan()
@@ -174,3 +258,17 @@ class TriviaTourPlan(models.Model):
         if configuration:
             body["configuration"] = configuration
         print(body)
+        url = "https://tourplanning.hereapi.com/v3/problems"
+        autorization = "Bearer " + token
+
+        headers = {
+            "Authorization": autorization,
+            "Content-Type": "application/json"
+        }
+
+        response = post(url, json=body, headers=headers)
+        # if response.status_code == 200:
+        #     print(response.json()) 
+        print(response.status_code)
+        print(response.json()) 
+        

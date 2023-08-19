@@ -24,8 +24,8 @@
                         <field name="name"/>
                         <field name="tour_profile_id"/>
                         <field name="fixed_cost"/>
-                        <field name="distance_cost"/>
-                        <field name="time_cost"/>
+                        <field name="distance_cost" digits="[12,12]"/>
+                        <field name="time_cost" digits="[12,12]"/>
                         <field name="capacity"/>
                         <field name="tour_skill_ids" widget="many2many_tags"/>
                         <field name="vehicle_ids" widget="many2many_tags"/>

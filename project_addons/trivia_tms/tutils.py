@@ -1,5 +1,6 @@
 import pytz
 from datetime import date, timedelta, datetime
+from requests import get, post, HTTPError, utils
 import json
 from json import dumps
 import http.client
