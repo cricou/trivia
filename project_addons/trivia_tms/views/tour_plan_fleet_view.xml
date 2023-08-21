@@ -6,7 +6,7 @@
         <field name="name">trivia.tour.plan.fleet.tree</field>
         <field name="model">trivia.tour.plan.fleet</field>
         <field name="arch" type="xml">
-            <tree string="Profiles">
+            <tree string="Tour Fleet">
                 <field name="tour_vehicle_type_id"/>
                 <field name="tour_profile_id"/>
                 <field name="vehicle_ids" attrs="{'invisible':[('is_external_fleet','=', True)]}" widget="many2many_tags"/>
@@ -21,7 +21,7 @@
         <field name="model">trivia.tour.plan.fleet</field>
         <field name="priority" eval="1"/>
         <field name="arch" type="xml">
-            <form string="Profiles">
+            <form string="Tour Fleet">
                 <sheet>
                     <field name="name"/>
                     <group col="4">
@@ -50,11 +50,6 @@
                         <page string="Settings">
                             <group col="4">
                                 <field name="shift_time" widget="float_time"/>
-                            </group>
-                            <group  col="4">
-                                <field name="break_timewindow_start" widget="float_time"/>
-                                <field name="break_timewindow_end" widget="float_time"/>
-                                <field name="break_duration" widget="float_time"/>
                             </group>
                             <group  col="4">
                                 <field name="stop_base_duration" widget="float_time"/>

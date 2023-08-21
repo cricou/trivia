@@ -76,7 +76,7 @@ class TriviaTourPlan(models.Model):
         v_type = fleet.tour_vehicle_type_id
         profile = fleet.tour_vehicle_type_id.tour_profile_id
         shift_time = Tutils.convert_float_time_to_second(fleet.shift_time)
-        break_duration = Tutils.convert_float_time_to_second(fleet.break_duration)
+
         try:
             capacity = eval(v_type.capacity)
         except:
@@ -109,16 +109,6 @@ class TriviaTourPlan(models.Model):
                 skills.append(skill.name)
             type_obj['skills'] = skills
 
-        #TODO ADD BREAK
-        # breaks = []
-        
-        # shift_break = {
-        #     "duration": break_duration,
-        #     "times":[
-
-        #     ]
-        # }
-
         shifts = []
         for shift in fleet.tour_plan_fleet_shift_ids:
             obj = {
@@ -140,6 +130,18 @@ class TriviaTourPlan(models.Model):
                         "lng": shift.shift_location_end.longitude
                     }
                 }
+            if shift.break_start_date and shift.break_end_date and shift.break_duration != 0:
+                obj['breaks'] = [
+                    {
+                        'duration': Tutils.convert_float_time_to_second(shift.break_duration),
+                        'times':[
+                            [
+                                Tutils.convert_datetime_to_isoformat(shift.break_start_date),
+                                Tutils.convert_datetime_to_isoformat(shift.break_end_date)
+                            ]
+                        ]
+                    }
+                ]
             shifts.append(obj)
         type_obj["shifts"] = shifts
         profile_obj = {

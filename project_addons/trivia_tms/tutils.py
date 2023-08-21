@@ -30,9 +30,10 @@ class Tutils:
         return utc_naive_dtime
     
     def daterange(start_date, end_date):
-        for n in range(int((end_date - start_date).days)):
+        for n in range(int((end_date - start_date).days) + 1):
             yield start_date + timedelta(n)
-    
+
+        
     def getHereAuthToken():
         access_key = os.environ['HERE_ACCESS_KEY_ID']
         access_secret = os.environ['HERE_ACCESS_KEY_SECRET']
