@@ -66,6 +66,17 @@
                             </tree>
                         </field>
                     </group>
+                    <group string="Unassigned Missions Order" attrs="{'invisible':[('unassigned_mo_ids','=', None)]}">
+                        <field name="unassigned_mo_ids" nolabel="1">
+                            <tree string="Missions order">
+                                <field name="name" />
+                                <field name="loading"/>
+                                <field name="delivery"/>
+                                <field name="distance" sum="Total Distances"/>
+                                <field name="total_cost" sum="Total Costs"/>
+                            </tree>
+                        </field>
+                    </group>
                 </sheet>
             </form>
         </field>

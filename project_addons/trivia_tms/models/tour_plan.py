@@ -21,6 +21,12 @@ class TriviaTourPlan(models.Model):
     start_date = fields.Date(string="Start Date")
     end_date = fields.Date(string="End Date")
     mission_order_ids = fields.Many2many('mission.order', string="Missions order")
+    unassigned_mo_ids = fields.Many2many(comodel_name='mission.order',
+                                         relation="tour_plan_mo_un_rel",
+                                         column1='tour_plan_id',
+                                         column2='mo_id',
+                                         string="Unassigned Missions Order",
+                                         )
     tour_plan_fleet_ids = fields.One2many('trivia.tour.plan.fleet', 'tour_plan_id')
     
     note = fields.Text(string="Note")
@@ -242,35 +248,186 @@ class TriviaTourPlan(models.Model):
     def tour_step_objectives(self):
         return False
 
-    def action_calc_tour_plan(self):
-        body = {}
-        token = Tutils.getHereAuthToken()
-        print(token)
-        configuration = self.tour_step_configuration()
-        fleet = self.tour_step_fleet()
-        plan = self.tour_step_plan()
-        objectives = self.tour_step_objectives()
+    def get_tours_statistic(self, json):
+        #TODO Statistic
+        return
 
-        if plan:
-            body["plan"] = plan
-        if fleet:
-            body["fleet"] = fleet
-        if objectives:
-            body["objectives"] = objectives
-        if configuration:
-            body["configuration"] = configuration
-        print(body)
-        url = "https://tourplanning.hereapi.com/v3/problems"
-        autorization = "Bearer " + token
-
-        headers = {
-            "Authorization": autorization,
-            "Content-Type": "application/json"
+    def get_tour_info(self,tour):
+        vehicle_type_model = self.env['trivia.tour.vehicle.type']
+        fleet_vehicle_model = self.env['fleet.vehicle']
+        vehicle_type = tour["typeId"].split('-')
+        vehicle_type_id = int(vehicle_type[0])
+        vehicle_type_obj = vehicle_type_model.search([('id', '=', vehicle_type_id)])
+        vehicle_type_name = vehicle_type_obj.name
+        is_ext_fleet = False if vehicle_type[1] == "False" else True
+        tour_name = None
+        vehicle_obj = None
+        tour_plan_fleet_obj = self.env['trivia.tour.plan.fleet'].search(
+                [
+                    ('is_external_fleet', '=', is_ext_fleet),
+                    ('tour_vehicle_type_id', '=', vehicle_type_id),
+                    ('tour_plan_id', '=', self.id)
+                ],
+                limit=1
+            )
+        
+        if is_ext_fleet:
+            vehicle_num = tour["vehicleId"].split('_')[1]
+            tour_name = "%s - Vehicle %s" % (vehicle_type_name, vehicle_num)
+        else:
+            vehicle_obj = fleet_vehicle_model.search([('id', '=', int(tour["vehicleId"].split('-')[1]))])
+            tour_name = "%s - %s" % (vehicle_type_name, vehicle_obj.name)
+        
+        result = {
+            'is_ext_fleet': is_ext_fleet,
+            'tour_name': tour_name,
+            'vehicle_obj': vehicle_obj,
+            'vehicle_type_obj': vehicle_type_obj,
+            'tour_plan_fleet_obj': tour_plan_fleet_obj
         }
+        return result
 
-        response = post(url, json=body, headers=headers)
+    def get_activities_info(self, activities):
+        result = {}
+        activity_values = []
+        activity_type_list = []
+        activity_type_model = self.env['trivia.tour.step.activity.type']
+        
+        for activity in activities:
+            mission_order_id = activity.get('jobTag') if activity.get('jobTag') else None
+            arrival_date = Tutils.convert_isoformat_to_datetime(activity['time']['start'])
+            departure_date = Tutils.convert_isoformat_to_datetime(activity['time']['end'])
+            activity_type = activity['type']
+            activity_type_id = activity_type_model.search([('ref', '=', activity_type)])
+            activity_type_list.append(activity_type_id)
+            activity_values.append(
+                {
+                    'mission_order_id': mission_order_id,
+                    'arrival_date': arrival_date,
+                    'departure_date': departure_date,
+                    'activity_type_id': activity_type_id.id if activity_type_id else None
+                }
+            )
+        activity_type_ids = [(4, values.id) for values in set(activity_type_list)]
+        print(activity_type_ids)
+        activity_ids = [(0, 0, values) for values in activity_values]
+        print(activity_ids)
+        result['activity_type_ids'] = activity_type_ids
+        result['activity_ids'] = activity_ids
+        return result
+
+            
+
+
+    def get_steps_info(self, steps):
+        mo_model = self.env['mission.order']
+        poi_model = self.env['point.of.interest']
+        step_values = []
+        for step in steps:
+            poi_obj = poi_model.search(
+                    [
+                        ('longitude', '=', step['location']['lng']),
+                        ('latitude', '=', step['location']['lat'])
+                    ],
+                    limit=1
+                )
+            arrival_date = Tutils.convert_isoformat_to_datetime(step['time']['arrival'])
+            departure_date = Tutils.convert_isoformat_to_datetime(step['time']['departure'])
+            distance = Tutils.convert_meter_to_kilometer(step['distance'])
+            load = str(step['load'])
+            step_location = poi_obj.id if poi_obj else None
+            activities_result = self.get_activities_info(step['activities'])
+
+            step_values.append(
+                {
+                    'location_id': step_location,
+                    'distance': distance,
+                    'arrival_date': arrival_date,
+                    'load': load,
+                    'departure_date': departure_date,
+                    'tour_step_activity_ids': activities_result['activity_ids'],
+                    'tour_step_activity_type_ids': activities_result['activity_type_ids']
+                }
+            )
+
+        tour_step_ids = [(0, 0, values) for values in step_values]
+        return tour_step_ids
+
+
+    def generate_tours(self, json):
+        
+        tour_model = self.env['trivia.tour']
+        tours = json['tours']
+        for tour in tours:
+
+            # tour information
+            statistic = tour['statistic']
+            self.get_tours_statistic(statistic)
+            first_step = tour['stops'][0]
+            last_step = tour['stops'][-1]
+            tour_info = self.get_tour_info(tour)
+            shift_index = tour['shiftIndex']
+            shift_obj = tour_info['tour_plan_fleet_obj'].tour_plan_fleet_shift_ids[shift_index]
+            tour_start_date = Tutils.convert_isoformat_to_datetime(first_step['time']['departure'])
+            tour_end_date = Tutils.convert_isoformat_to_datetime(last_step['time']['departure'])
+
+            #steps informations
+            steps_ids = self.get_steps_info(tour['stops'])
+
+                
+
+            tour_model.create(
+                {
+                    'name': tour_info['tour_name'],
+                    'tour_plan_id': self.id,
+                    'start_date': tour_start_date,
+                    'end_date': tour_end_date,
+                    'vehicle_id': tour_info['vehicle_obj'].id if tour_info.get('vehicle_obj') else None,
+                    'start_position': shift_obj.shift_location_start.id if shift_obj.shift_location_start else None,
+                    'end_position': shift_obj.shift_location_end.id if shift_obj.shift_location_end else None,
+                    'driving_time': Tutils.convert_second_to_float_time(statistic['times']['driving']),
+                    'distance': Tutils.convert_meter_to_kilometer(statistic['distance']),
+                    'duration': Tutils.convert_second_to_float_time(statistic['duration']),
+                    'tour_step_ids': steps_ids
+                }
+            )
+
+
+
+
+
+    def action_calc_tour_plan(self):
+        self.generate_tours({'statistic': {'cost': 158.70112, 'distance': 358441, 'duration': 41028, 'times': {'driving': 34908, 'serving': 2520, 'waiting': 0, 'stopping': 0, 'break': 3600}}, 'tours': [{'vehicleId': '1-True_1', 'typeId': '1-True', 'stops': [{'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'arrival': '2023-08-29T03:00:00Z', 'departure': '2023-08-29T05:30:27Z'}, 'load': [0], 'activities': [{'jobId': 'departure', 'type': 'departure', 'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'start': '2023-08-29T03:00:00Z', 'end': '2023-08-29T05:30:27Z'}}], 'distance': 0}, {'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'arrival': '2023-08-29T06:00:00Z', 'departure': '2023-08-29T06:02:00Z'}, 'load': [20, 2000], 'activities': [{'jobId': 'mission_order-435', 'type': 'pickup', 'jobTag': '435', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-29T06:00:00Z', 'end': '2023-08-29T06:01:00Z'}}, {'jobId': 'mission_order-436', 'type': 'pickup', 'jobTag': '436', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-29T06:01:00Z', 'end': '2023-08-29T06:02:00Z'}}], 'distance': 19641}, {'location': {'lat': 45.725041, 'lng': 4.786103}, 'time': {'arrival': '2023-08-29T06:33:41Z', 'departure': '2023-08-29T06:34:41Z'}, 'load': [10, 1000], 'activities': [{'jobId': 'mission_order-436', 'type': 'delivery', 'jobTag': '436', 'location': {'lat': 45.725041, 'lng': 4.786103}, 'time': {'start': '2023-08-29T06:33:41Z', 'end': '2023-08-29T06:34:41Z'}}], 'distance': 31944}, {'location': {'lat': 45.703908, 'lng': 4.64038}, 'time': {'arrival': '2023-08-29T07:15:31Z', 'departure': '2023-08-29T07:16:31Z'}, 'load': [0, 0], 'activities': [{'jobId': 'mission_order-435', 'type': 'delivery', 'jobTag': '435', 'location': {'lat': 45.703908, 'lng': 4.64038}, 'time': {'start': '2023-08-29T07:15:31Z', 'end': '2023-08-29T07:16:31Z'}}], 'distance': 53172}, {'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'arrival': '2023-08-29T08:10:34Z', 'departure': '2023-08-29T08:10:34Z'}, 'load': [0, 0], 'activities': [{'jobId': 'arrival', 'type': 'arrival', 'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'start': '2023-08-29T08:10:34Z', 'end': '2023-08-29T08:10:34Z'}}], 'distance': 91252}], 'statistic': {'cost': 51.20064000000001, 'distance': 91252, 'duration': 9607, 'times': {'driving': 9367, 'serving': 240, 'waiting': 0, 'stopping': 0, 'break': 0}}, 'shiftIndex': 1}, {'vehicleId': '1-True_1', 'typeId': '1-True', 'stops': [{'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'arrival': '2023-08-28T03:00:00Z', 'departure': '2023-08-28T05:30:27Z'}, 'load': [0], 'activities': [{'jobId': 'departure', 'type': 'departure', 'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'start': '2023-08-28T03:00:00Z', 'end': '2023-08-28T05:30:27Z'}}], 'distance': 0}, {'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'arrival': '2023-08-28T06:00:00Z', 'departure': '2023-08-28T06:16:00Z'}, 'load': [160, 16000], 'activities': [{'jobId': 'mission_order-421', 'type': 'pickup', 'jobTag': '421', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:00:00Z', 'end': '2023-08-28T06:01:00Z'}}, {'jobId': 'mission_order-407', 'type': 'pickup', 'jobTag': '407', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:01:00Z', 'end': '2023-08-28T06:02:00Z'}}, {'jobId': 'mission_order-440', 'type': 'pickup', 'jobTag': '440', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:02:00Z', 'end': '2023-08-28T06:03:00Z'}}, {'jobId': 'mission_order-380', 'type': 'pickup', 'jobTag': '380', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:03:00Z', 'end': '2023-08-28T06:04:00Z'}}, {'jobId': 'mission_order-439', 'type': 'pickup', 'jobTag': '439', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:04:00Z', 'end': '2023-08-28T06:05:00Z'}}, {'jobId': 'mission_order-437', 'type': 'pickup', 'jobTag': '437', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:05:00Z', 'end': '2023-08-28T06:06:00Z'}}, {'jobId': 'mission_order-415', 'type': 'pickup', 'jobTag': '415', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:06:00Z', 'end': '2023-08-28T06:07:00Z'}}, {'jobId': 'mission_order-427', 'type': 'pickup', 'jobTag': '427', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:07:00Z', 'end': '2023-08-28T06:08:00Z'}}, {'jobId': 'mission_order-384', 'type': 'pickup', 'jobTag': '384', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:08:00Z', 'end': '2023-08-28T06:09:00Z'}}, {'jobId': 'mission_order-412', 'type': 'pickup', 'jobTag': '412', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:09:00Z', 'end': '2023-08-28T06:10:00Z'}}, {'jobId': 'mission_order-364', 'type': 'pickup', 'jobTag': '364', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:10:00Z', 'end': '2023-08-28T06:11:00Z'}}, {'jobId': 'mission_order-379', 'type': 'pickup', 'jobTag': '379', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:11:00Z', 'end': '2023-08-28T06:12:00Z'}}, {'jobId': 'mission_order-419', 'type': 'pickup', 'jobTag': '419', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:12:00Z', 'end': '2023-08-28T06:13:00Z'}}, {'jobId': 'mission_order-403', 'type': 'pickup', 'jobTag': '403', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:13:00Z', 'end': '2023-08-28T06:14:00Z'}}, {'jobId': 'mission_order-383', 'type': 'pickup', 'jobTag': '383', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:14:00Z', 'end': '2023-08-28T06:15:00Z'}}, {'jobId': 'mission_order-361', 'type': 'pickup', 'jobTag': '361', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T06:15:00Z', 'end': '2023-08-28T06:16:00Z'}}], 'distance': 19641}, {'location': {'lat': 45.874552, 'lng': 4.712079}, 'time': {'arrival': '2023-08-28T06:53:21Z', 'departure': '2023-08-28T06:54:21Z'}, 'load': [150, 15000], 'activities': [{'jobId': 'mission_order-419', 'type': 'delivery', 'jobTag': '419', 'location': {'lat': 45.874552, 'lng': 4.712079}, 'time': {'start': '2023-08-28T06:53:21Z', 'end': '2023-08-28T06:54:21Z'}}], 'distance': 43641}, {'location': {'lat': 45.809106, 'lng': 4.568033}, 'time': {'arrival': '2023-08-28T07:24:03Z', 'departure': '2023-08-28T07:25:03Z'}, 'load': [140, 14000], 'activities': [{'jobId': 'mission_order-364', 'type': 'delivery', 'jobTag': '364', 'location': {'lat': 45.809106, 'lng': 4.568033}, 'time': {'start': '2023-08-28T07:24:03Z', 'end': '2023-08-28T07:25:03Z'}}], 'distance': 61295}, {'location': {'lat': 45.789178, 'lng': 4.537824}, 'time': {'arrival': '2023-08-28T07:37:12Z', 'departure': '2023-08-28T07:38:12Z'}, 'load': [130, 13000], 'activities': [{'jobId': 'mission_order-412', 'type': 'delivery', 'jobTag': '412', 'location': {'lat': 45.789178, 'lng': 4.537824}, 'time': {'start': '2023-08-28T07:37:12Z', 'end': '2023-08-28T07:38:12Z'}}], 'distance': 67000}, {'location': {'lat': 45.794457, 'lng': 4.531095}, 'time': {'arrival': '2023-08-28T07:44:57Z', 'departure': '2023-08-28T07:45:57Z'}, 'load': [120, 12000], 'activities': [{'jobId': 'mission_order-384', 'type': 'delivery', 'jobTag': '384', 'location': {'lat': 45.794457, 'lng': 4.531095}, 'time': {'start': '2023-08-28T07:44:57Z', 'end': '2023-08-28T07:45:57Z'}}], 'distance': 69299}, {'location': {'lat': 45.834028, 'lng': 4.522438}, 'time': {'arrival': '2023-08-28T07:59:59Z', 'departure': '2023-08-28T08:00:59Z'}, 'load': [110, 11000], 'activities': [{'jobId': 'mission_order-427', 'type': 'delivery', 'jobTag': '427', 'location': {'lat': 45.834028, 'lng': 4.522438}, 'time': {'start': '2023-08-28T07:59:59Z', 'end': '2023-08-28T08:00:59Z'}}], 'distance': 77984}, {'location': {'lat': 45.863209, 'lng': 4.550903}, 'time': {'arrival': '2023-08-28T08:13:40Z', 'departure': '2023-08-28T08:14:40Z'}, 'load': [100, 10000], 'activities': [{'jobId': 'mission_order-415', 'type': 'delivery', 'jobTag': '415', 'location': {'lat': 45.863209, 'lng': 4.550903}, 'time': {'start': '2023-08-28T08:13:40Z', 'end': '2023-08-28T08:14:40Z'}}], 'distance': 84253}, {'location': {'lat': 45.857308, 'lng': 4.643828}, 'time': {'arrival': '2023-08-28T08:30:27Z', 'departure': '2023-08-28T08:31:27Z'}, 'load': [90, 9000], 'activities': [{'jobId': 'mission_order-437', 'type': 'delivery', 'jobTag': '437', 'location': {'lat': 45.857308, 'lng': 4.643828}, 'time': {'start': '2023-08-28T08:30:27Z', 'end': '2023-08-28T08:31:27Z'}}], 'distance': 98750}, {'location': {'lat': 45.797201, 'lng': 4.620981}, 'time': {'arrival': '2023-08-28T08:46:29Z', 'departure': '2023-08-28T08:47:29Z'}, 'load': [80, 8000], 'activities': [{'jobId': 'mission_order-407', 'type': 'delivery', 'jobTag': '407', 'location': {'lat': 45.797201, 'lng': 4.620981}, 'time': {'start': '2023-08-28T08:46:29Z', 'end': '2023-08-28T08:47:29Z'}}], 'distance': 111227}, {'location': {'lat': 45.77713, 'lng': 4.588174}, 'time': {'arrival': '2023-08-28T09:00:10Z', 'departure': '2023-08-28T09:01:10Z'}, 'load': [70, 7000], 'activities': [{'jobId': 'mission_order-379', 'type': 'delivery', 'jobTag': '379', 'location': {'lat': 45.77713, 'lng': 4.588174}, 'time': {'start': '2023-08-28T09:00:10Z', 'end': '2023-08-28T09:01:10Z'}}], 'distance': 119321}, {'location': {'lat': 45.762144, 'lng': 4.492384}, 'time': {'arrival': '2023-08-28T09:17:16Z', 'departure': '2023-08-28T09:18:16Z'}, 'load': [60, 6000], 'activities': [{'jobId': 'mission_order-380', 'type': 'delivery', 'jobTag': '380', 'location': {'lat': 45.762144, 'lng': 4.492384}, 'time': {'start': '2023-08-28T09:17:16Z', 'end': '2023-08-28T09:18:16Z'}}], 'distance': 129733}, {'location': {'lat': 45.756102, 'lng': 4.498937}, 'time': {'arrival': '2023-08-28T09:23:02Z', 'departure': '2023-08-28T09:24:02Z'}, 'load': [50, 5000], 'activities': [{'jobId': 'mission_order-440', 'type': 'delivery', 'jobTag': '440', 'location': {'lat': 45.756102, 'lng': 4.498937}, 'time': {'start': '2023-08-28T09:23:02Z', 'end': '2023-08-28T09:24:02Z'}}], 'distance': 131605}, {'location': {'lat': 45.745556, 'lng': 4.487122}, 'time': {'arrival': '2023-08-28T09:33:12Z', 'departure': '2023-08-28T09:34:12Z'}, 'load': [40, 4000], 'activities': [{'jobId': 'mission_order-421', 'type': 'delivery', 'jobTag': '421', 'location': {'lat': 45.745556, 'lng': 4.487122}, 'time': {'start': '2023-08-28T09:33:12Z', 'end': '2023-08-28T09:34:12Z'}}], 'distance': 136304}, {'location': {'lat': 45.737818, 'lng': 4.546381}, 'time': {'arrival': '2023-08-28T09:55:43Z', 'departure': '2023-08-28T09:56:43Z'}, 'load': [30, 3000], 'activities': [{'jobId': 'mission_order-439', 'type': 'delivery', 'jobTag': '439', 'location': {'lat': 45.737818, 'lng': 4.546381}, 'time': {'start': '2023-08-28T09:55:43Z', 'end': '2023-08-28T09:56:43Z'}}], 'distance': 149611}, {'location': {'lat': 45.688773, 'lng': 4.802407}, 'time': {'arrival': '2023-08-28T10:51:01Z', 'departure': '2023-08-28T10:52:01Z'}, 'load': [20, 2000], 'activities': [{'jobId': 'mission_order-403', 'type': 'delivery', 'jobTag': '403', 'location': {'lat': 45.688773, 'lng': 4.802407}, 'time': {'start': '2023-08-28T10:51:01Z', 'end': '2023-08-28T10:52:01Z'}}], 'distance': 182769}, {'location': {'lat': 45.786942, 'lng': 4.83481}, 'time': {'arrival': '2023-08-28T11:18:49Z', 'departure': '2023-08-28T11:19:49Z'}, 'load': [10, 1000], 'activities': [{'jobId': 'mission_order-361', 'type': 'delivery', 'jobTag': '361', 'location': {'lat': 45.786942, 'lng': 4.83481}, 'time': {'start': '2023-08-28T11:18:49Z', 'end': '2023-08-28T11:19:49Z'}}], 'distance': 200229}, {'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'arrival': '2023-08-28T11:39:07Z', 'departure': '2023-08-28T11:42:07Z'}, 'load': [40, 4000], 'activities': [{'jobId': 'mission_order-434', 'type': 'pickup', 'jobTag': '434', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T11:39:07Z', 'end': '2023-08-28T11:40:07Z'}}, {'jobId': 'mission_order-433', 'type': 'pickup', 'jobTag': '433', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T11:40:07Z', 'end': '2023-08-28T11:41:07Z'}}, {'jobId': 'mission_order-422', 'type': 'pickup', 'jobTag': '422', 'location': {'lat': 45.760132, 'lng': 4.875581}, 'time': {'start': '2023-08-28T11:41:07Z', 'end': '2023-08-28T11:42:07Z'}}], 'distance': 205874}, {'location': {'lat': 45.812342, 'lng': 4.935005}, 'time': {'arrival': '2023-08-28T12:02:26Z', 'departure': '2023-08-28T12:03:26Z'}, 'load': [30, 3000], 'activities': [{'jobId': 'mission_order-383', 'type': 'delivery', 'jobTag': '383', 'location': {'lat': 45.812342, 'lng': 4.935005}, 'time': {'start': '2023-08-28T12:02:26Z', 'end': '2023-08-28T12:03:26Z'}}], 'distance': 217319}, {'location': {'lat': 45.835942, 'lng': 4.98561}, 'time': {'arrival': '2023-08-28T12:23:09Z', 'departure': '2023-08-28T13:24:09Z'}, 'load': [20, 2000], 'activities': [{'jobId': 'mission_order-434', 'type': 'delivery', 'jobTag': '434', 'location': {'lat': 45.835942, 'lng': 4.98561}, 'time': {'start': '2023-08-28T12:23:09Z', 'end': '2023-08-28T12:24:09Z'}}, {'jobId': 'break', 'type': 'break', 'location': {'lat': 45.835942, 'lng': 4.98561}, 'time': {'start': '2023-08-28T12:24:09Z', 'end': '2023-08-28T13:24:09Z'}}], 'distance': 233492}, {'location': {'lat': 45.77245, 'lng': 4.966339}, 'time': {'arrival': '2023-08-28T13:45:29Z', 'departure': '2023-08-28T13:46:29Z'}, 'load': [10, 1000], 'activities': [{'jobId': 'mission_order-433', 'type': 'delivery', 'jobTag': '433', 'location': {'lat': 45.77245, 'lng': 4.966339}, 'time': {'start': '2023-08-28T13:45:29Z', 'end': '2023-08-28T13:46:29Z'}}], 'distance': 250464}, {'location': {'lat': 45.694678, 'lng': 4.960346}, 'time': {'arrival': '2023-08-28T14:00:45Z', 'departure': '2023-08-28T14:01:45Z'}, 'load': [0, 0], 'activities': [{'jobId': 'mission_order-422', 'type': 'delivery', 'jobTag': '422', 'location': {'lat': 45.694678, 'lng': 4.960346}, 'time': {'start': '2023-08-28T14:00:45Z', 'end': '2023-08-28T14:01:45Z'}}], 'distance': 262153}, {'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'arrival': '2023-08-28T14:14:08Z', 'departure': '2023-08-28T14:14:08Z'}, 'load': [0, 0], 'activities': [{'jobId': 'arrival', 'type': 'arrival', 'location': {'lat': 45.66291, 'lng': 4.95721}, 'time': {'start': '2023-08-28T14:14:08Z', 'end': '2023-08-28T14:14:08Z'}}], 'distance': 267189}], 'statistic': {'cost': 107.50048000000001, 'distance': 267189, 'duration': 31421, 'times': {'driving': 25541, 'serving': 2280, 'waiting': 0, 'stopping': 0, 'break': 3600}}, 'shiftIndex': 0}]})
+        return
+        # body = {}
+        # token = Tutils.getHereAuthToken()
+        # # print(token)
+        # configuration = self.tour_step_configuration()
+        # fleet = self.tour_step_fleet()
+        # plan = self.tour_step_plan()
+        # objectives = self.tour_step_objectives()
+
+        # if plan:
+        #     body["plan"] = plan
+        # if fleet:
+        #     body["fleet"] = fleet
+        # if objectives:
+        #     body["objectives"] = objectives
+        # if configuration:
+        #     body["configuration"] = configuration
+        # # print(body)
+        # url = "https://tourplanning.hereapi.com/v3/problems"
+        # autorization = "Bearer " + token
+
+        # headers = {
+        #     "Authorization": autorization,
+        #     "Content-Type": "application/json"
+        # }
+
+        # response = post(url, json=body, headers=headers)
         # if response.status_code == 200:
         #     print(response.json()) 
-        print(response.status_code)
-        print(response.json()) 
+        #     self.generate_tours(response.json())
+        # print(response.status_code)
+
         

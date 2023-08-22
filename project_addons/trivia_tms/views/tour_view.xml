@@ -25,13 +25,6 @@
         <field name="arch" type="xml">
             <form string="Tours">
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
-                        <button name="open_tour_step"
-                                type="object" class="oe_stat_button" icon="fa-list">
-                            <field name="tour_step_count" class="o_stat_value"/>
-                            <span class="o_stat_text">Steps</span>
-                        </button>
-                    </div>
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
@@ -52,25 +45,18 @@
                     <group>
                         <field name="note"/>
                     </group>
-                    <group string="Missions order">
-                        <field name="mission_order_ids" nolabel="1">
-                            <tree string="Missions order" default_order="sequence">
-                                <field name='sequence' widget='handle'/>
-                                <field name="name" />
-                                <field name="loading"/>
-                                <field name="delivery"/>
-                                <field name="distance" sum="Total Distances"/>
-                                <field name="total_cost" sum="Total Costs"/>
-                            </tree>
-                        </field>
+                    <group>
+                        <field name="mission_order_ids" widget="many2many_tags"/>
                     </group>
-                    
+                    <group string="Steps">
+                        <field name="tour_step_ids" nolabel="1"/>
+                    </group>
                     <notebook>
                         <page string="Routes">
                             <group  col="4">
                                 <field name="driving_time" widget="float_time"/>
                                 <field name="distance"/>
-                                <field name="duration"/>
+                                <field name="duration" widget="float_time"/>
                             </group>
                             <group  col="4">
                                 <field name="fuel_cost"/>

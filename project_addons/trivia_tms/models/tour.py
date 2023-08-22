@@ -18,10 +18,10 @@ class TriviaTour(models.Model):
     _description = 'TRIVIA Tour'
     _inherit = ['mail.thread']
 
+    sequence = fields.Integer()
     name = fields.Char(string="Name", copy=False, readonly=True)
     start_date = fields.Datetime(string="Start Date")
     end_date = fields.Datetime(string="End Date")
-    mission_order_ids = fields.Many2many('mission.order', string="Missions order")
     start_position = fields.Many2one('point.of.interest')
     end_position = fields.Many2one('point.of.interest')
 
@@ -38,31 +38,9 @@ class TriviaTour(models.Model):
     total_cost = fields.Float(string="Total cost")
 
     tour_step_ids = fields.One2many('trivia.tour.step', 'tour_id', string="Tour Steps")
-    tour_step_count = fields.Integer(compute='_calc_tour_step_count')
-
     tour_plan_id = fields.Many2one('trivia.tour.plan')
 
-    def _calc_tour_step_count(self):
-        self.ensure_one()
-        for rec in self:
-            rec.tour_step_count = len(rec.tour_step_ids)
-
-    def open_tour_step(self):
-        return {
-            'name': 'Tour Steps',
-            'domain': [('tour_id', '=', self.id)],
-            'res_model': 'trivia.tour.step',
-            'target': 'current',
-            'view_mode': 'tree,form',
-            'type': 'ir.actions.act_window'
-        }
-
-    @api.model
-    def create(self, values):
-        if not values.get('name'):
-            # fallback on any pos.order sequence
-            values['name'] = self.env['ir.sequence'].next_by_code('trivia_tms.tour')
-        return super(TriviaTour, self).create(values)
+    mission_order_ids = fields.Many2many('mission.order', string="Missions order")
 
     def create_steps(self, json):
         statistic = json['statistic']

@@ -29,12 +29,12 @@ class TriviaTourStep(models.Model):
     load = fields.Char(stirng="Load")
     arrival_date = fields.Datetime(string="Arrival Date")
     departure_date = fields.Datetime(string="Departure Date")
-    full_address = fields.Char(string="Full Address")
+    location_id = fields.Many2one('point.of.interest', string="Location")
     note = fields.Text(string="Note")
     state = fields.Selection(selection=STATE, default='draft')
     tour_step_activity_ids = fields.One2many('trivia.tour.step.activity', 'tour_step_id')
-    # vehicle_id = fields.Many2one('fleet.vehicle')
 
+    tour_step_activity_type_ids = fields.Many2many('trivia.tour.step.activity.type')
 
     @api.onchange('mission_order_id', 'activity_type')
     def _get_full_address(self):

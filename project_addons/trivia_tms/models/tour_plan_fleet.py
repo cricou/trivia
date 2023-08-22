@@ -77,5 +77,9 @@ class TriviaTourPlanFleet(models.Model):
     tour_plan_fleet_shift_ids = fields.One2many('trivia.tour.plan.fleet.shift',
                                                 'tour_plan_fleet_id',
                                                 default=get_default_tour_plan_fleet_shift_ids)
+    
+    _sql_constraints = [
+        ('unique_tour_plan_fleet', 'UNIQUE(tour_plan_id, is_external_fleet, tour_vehicle_type_id)', 'Combination of Tour Plan, External Fleet, and Vehicle Type must be unique.')
+    ]
 
     

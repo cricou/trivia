@@ -7,15 +7,14 @@
         <field name="model">trivia.tour.step</field>
         <field name="arch" type="xml">
             <tree string="Tour Steps">
-                <!-- <button readonly="True" class="oe_inline oe_stat_button" icon="fa-solid fa-truck" attrs="{'invisible': [('activity_type', '!=', 'departure')]}"/>
-                <button readonly="True" class="oe_inline oe_stat_button" icon="fa-solid fa-home" attrs="{'invisible': [('activity_type', '!=', 'arrival')]}"/>
-                <button readonly="True" class="oe_inline oe_stat_button" icon="fa-solid fa-caret-square-o-up" attrs="{'invisible': [('activity_type', '!=', 'pickup')]}"/>
-                <button readonly="True" class="oe_inline oe_stat_button" icon="fa-solid fa-caret-square-o-down" attrs="{'invisible': [('activity_type', '!=', 'delivery')]}"/>
-                <button readonly="True" class="oe_inline oe_stat_button" icon="fa-solid fa-coffee" attrs="{'invisible': [('activity_type', '!=', 'break')]}"/>
-                <button readonly="True" class="oe_inline oe_stat_button" icon="fa-solid fa-refresh" attrs="{'invisible': [('activity_type', '!=', 'reload')]}"/> -->
-                <field name="full_address"/>
+                <field name="tour_step_activity_type_ids" 
+                           widget="many2many_tags"
+                           options="{'color_field': 'color'}"
+                           nolabel="1"/>
+                <field name="location_id"/>
                 <field name="arrival_date"/>
                 <field name="departure_date"/>
+                <field name="load"/>
                 <field name="state"
                        widget="badge"
                        decoration-success="state=='done'"
@@ -37,11 +36,15 @@
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
+                    <field name="tour_step_activity_type_ids" 
+                           widget="many2many_tags"
+                           options="{'color_field': 'color'}"
+                           nolabel="1"/>
                     <group col="4">
                         <field name="tour_id"/>
                     </group>
                     <group col="4">
-                        <field name="full_address"/>
+                        <field name="location_id"/>
                         <field name="distance"/>
                     </group>
                     <group col="4">

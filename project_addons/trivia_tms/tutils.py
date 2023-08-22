@@ -21,6 +21,17 @@ class Tutils:
         minutes = int(minutes_decimal * 60)
         total_seconds = (hours * 3600) + (minutes * 60)
         return total_seconds
+    
+    def convert_meter_to_kilometer(meter):
+        return meter / 1000
+        
+    def convert_second_to_float_time(total_seconds):
+        hours = total_seconds // 3600
+        remaining_seconds = total_seconds % 3600
+        minutes = remaining_seconds // 60
+        float_time = hours + minutes / 60
+        float_time_rounded = round(float_time, 2)
+        return float_time_rounded
 
     def convert_local_datetime_to_utc_date_time(local_datetime, tz):
         local_timezone = pytz.timezone(tz)
@@ -33,7 +44,11 @@ class Tutils:
         for n in range(int((end_date - start_date).days) + 1):
             yield start_date + timedelta(n)
 
-        
+    def convert_isoformat_to_datetime(iso_date):
+        iso_date = iso_date.replace("Z","")
+        result = datetime.strptime(iso_date, "%Y-%m-%dT%H:%M:%S")
+        return result
+
     def getHereAuthToken():
         access_key = os.environ['HERE_ACCESS_KEY_ID']
         access_secret = os.environ['HERE_ACCESS_KEY_SECRET']
