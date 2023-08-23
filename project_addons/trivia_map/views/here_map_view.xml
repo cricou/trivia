@@ -1,0 +1,36 @@
+<odoo>
+    <template
+            id="assets_backend"
+            name="trivia_map assets backend"
+            inherit_id="web.assets_backend"
+        >
+        <xpath expr="." position="inside">
+            <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js"
+                    type="text/javascript" charset="utf-8"></script>
+            <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js"
+                    type="text/javascript" charset="utf-8"></script>
+            <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-ui.js"></script>
+            <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
+            <script
+                type="text/javascript"
+                src="/trivia_map/static/src/js/view/map/map_model.js"
+            />
+            <script
+                type="text/javascript"
+                src="/trivia_map/static/src/js/view/map/map_controller.js"
+            />
+            <script
+                type="text/javascript"
+                src="/trivia_map/static/src/js/view/map/map_renderer.js"
+            />
+            <script
+                type="text/javascript"
+                src="/trivia_map/static/src/js/view/map/map_view.js"
+            />
+            <script
+                type="text/javascript"
+                src="/trivia_map/static/src/js/view/view_registry.js"
+            />
+        </xpath>
+    </template>
+</odoo>

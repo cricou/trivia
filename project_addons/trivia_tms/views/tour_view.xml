@@ -77,10 +77,23 @@
         </field>
     </record>
 
+    <record id="tms_trivia_tour_here_map" model="ir.ui.view">
+        <field name="name">trivia.tour.here_map</field>
+        <field name="model">trivia.tour</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <here_map>
+                <field name="here_polylines" />
+                <field name="here_checkpoints"/>
+            </here_map>
+        </field>
+    </record>
+
     <record id="tms_trivia_tour_action" model="ir.actions.act_window">
         <field name="name">Tours</field>
         <field name="res_model">trivia.tour</field>
         <field name="view_id" ref="trivia_tms.tms_trivia_tour_tree"/>
+        <field name="view_mode">tree,form</field>
         <field name="help" type="html">
           <p class="o_view_nocontent_smiling_face">
             Set a new tour

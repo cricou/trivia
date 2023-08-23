@@ -137,9 +137,10 @@ class MissionOrder(models.Model):
         origin_coordinate = str(self.loading.latitude) + "," + str(self.loading.longitude)
         destination_coordinate = str(self.delivery.latitude) + "," + str(self.delivery.longitude)
         
-        request = "https://router.hereapi.com/v8/routes?apikey=%s&origin=%s&destination=%s&return=summary,tolls&transportMode=truck&currency=EUR&truck[grossWeight]=12000&truck[height]=400" % (here_api_key, origin_coordinate, destination_coordinate)
+        request = "https://router.hereapi.com/v8/routes?apikey=%s&origin=%s&destination=%s&return=polyline,summary,tolls&transportMode=truck&currency=EUR&truck[grossWeight]=12000&truck[height]=400" % (here_api_key, origin_coordinate, destination_coordinate)
         request_get = get(url = request)
         requests_result = request_get.json()
+        print(requests_result)
         driving_time = 0
         distance_km = 0
         toll_cost = 0

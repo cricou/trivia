@@ -42,6 +42,9 @@ class TriviaTour(models.Model):
 
     mission_order_ids = fields.Many2many('mission.order', string="Missions order")
 
+    here_polylines = fields.Text()
+    here_checkpoints = fields.Text()
+
     def create_steps(self, json):
         statistic = json['statistic']
         tours = json['tours']
