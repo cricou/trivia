@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- STAGES TREE VIEW + MUTI_EDIT -->
+    <record id="tms_trivia_tour_step_tree" model="ir.ui.view">
+        <field name="name">trivia.tour.step.tree</field>
+        <field name="model">trivia.tour.step</field>
+        <field name="arch" type="xml">
+            <tree string="Tour Steps">
+                <field name="tour_step_activity_type_ids" 
+                           widget="many2many_tags"
+                           options="{'color_field': 'color'}"
+                           nolabel="1"/>
+                <field name="location_id"/>
+                <field name="arrival_date"/>
+                <field name="departure_date"/>
+                <field name="load"/>
+                <field name="state"
+                       widget="badge"
+                       decoration-success="state=='done'"
+                       decoration-info="state=='in_progress'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="tms_trivia_tour_step_form" model="ir.ui.view">
+        <field name="name">trivia.tour.step.form</field>
+        <field name="model">trivia.tour.step</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Tour Steps">
+                <header>
+                    <field name="state" widget="statusbar" clickable="1"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <field name="tour_step_activity_type_ids" 
+                           widget="many2many_tags"
+                           options="{'color_field': 'color'}"
+                           nolabel="1"/>
+                    <group col="4">
+                        <field name="tour_id"/>
+                    </group>
+                    <group col="4">
+                        <field name="location_id"/>
+                        <field name="distance"/>
+                    </group>
+                    <group col="4">
+                        <field name="arrival_date"/>
+                        <field name="departure_date"/>
+                    </group>
+                    <group>
+                        <field name="note"/>
+                    </group>
+                    <group string="Activities">
+                        <field name="tour_step_activity_ids" nolabel="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <!-- Followers view -->
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <!-- Chatter view -->
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="tms_trivia_tour_step_action" model="ir.actions.act_window">
+        <field name="name">Tour Steps</field>
+        <field name="res_model">trivia.tour.step</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="trivia_tms.tms_trivia_tour_step_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Set a new tour step
+          </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_tms_trivia_tour_step_menu"
+        parent="menu_tour_main"
+        action="tms_trivia_tour_step_action"
+        sequence="30"/>
+
+</odoo>

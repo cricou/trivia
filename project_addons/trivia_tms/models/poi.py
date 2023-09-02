@@ -13,9 +13,13 @@ class PointOfInterest(models.Model):
 
     name = fields.Char(string="Name")
     full_address = fields.Char(string="Full Address")
-    longitude = fields.Float(string="Longitude")
-    latitude = fields.Float(string="Latitude")
-
+    longitude = fields.Float(string="Longitude", digits=(12, 6))
+    latitude = fields.Float(string="Latitude", digits=(12, 6))
+    
+    _sql_constraints = [
+        ('unique_longitude_latitude', 'UNIQUE(longitude, latitude)', 'Longitude and Latitude must be unique.')
+    ]
+    
     def name_get(self):
         result = []
             

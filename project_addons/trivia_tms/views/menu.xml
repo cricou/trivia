@@ -11,5 +11,22 @@
             name="Routes"
             parent="menu_trivia_tms_root"
             sequence="10"/>
+        <menuitem
+            id="menu_tour_main"
+            name="Tours"
+            parent="menu_trivia_tms_root"
+            sequence="15"/>
+
+        <menuitem
+            id="menu_settings_main"
+            name="Settings"
+            parent="menu_trivia_tms_root"
+            sequence="50"/>
+        
+        <menuitem
+            id="menu_settings_tour"
+            name="Tour"
+            parent="menu_settings_main"
+            sequence="10"/>
     </data>
 </odoo>

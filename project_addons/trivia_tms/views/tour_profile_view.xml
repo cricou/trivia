@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- STAGES TREE VIEW + MUTI_EDIT -->
+    <record id="tms_trivia_tour_profile_tree" model="ir.ui.view">
+        <field name="name">trivia.tour.profile.tree</field>
+        <field name="model">trivia.tour.profile</field>
+        <field name="arch" type="xml">
+            <tree string="Profiles">
+                <field name="name"/>
+                <field name="profile_type"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="tms_trivia_tour_profile_form" model="ir.ui.view">
+        <field name="name">trivia.tour.profile.form</field>
+        <field name="model">trivia.tour.profile</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Profiles">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="profile_type"/>
+                    </group>
+                </sheet>
+            </form>
+            
+        </field>
+    </record>
+
+    <record id="tms_trivia_tour_profile_action" model="ir.actions.act_window">
+        <field name="name">Profiles</field>
+        <field name="res_model">trivia.tour.profile</field>
+        <field name="view_id" ref="trivia_tms.tms_trivia_tour_profile_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Set a new profile
+          </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_tms_trivia_tour_profile_menu"
+        parent="menu_settings_tour"
+        action="tms_trivia_tour_profile_action"
+        sequence="15"/>
+
+</odoo>

@@ -9,5 +9,42 @@
             <field eval="1" name="number_next"/>
             <field eval="1" name="number_increment"/>
         </record>
+        <record id="sequence_tour_plan_seq" model="ir.sequence">
+            <field name="name">TMS Trivia tour plan sequence</field>
+            <field name="code">trivia_tms.tour_plan</field>
+            <field name="prefix">TP-%(year)s-%(month)s-</field>
+            <field name="padding">5</field>
+            <field eval="1" name="number_next"/>
+            <field eval="1" name="number_increment"/>
+        </record>
+        <record id="trivia_tour_activity_pickup" model="trivia.tour.step.activity.type">
+            <field name="name">Pickup</field>
+            <field name="ref">pickup</field>
+            <field name="color">#16a085</field>
+        </record>
+        <record id="trivia_tour_activity_departure" model="trivia.tour.step.activity.type">
+            <field name="name">Departure</field>
+            <field name="ref">departure</field>
+        </record>
+        <record id="trivia_tour_activity_arrival" model="trivia.tour.step.activity.type">
+            <field name="name">Arrival</field>
+            <field name="ref">arrival</field>
+        </record>
+        <record id="trivia_tour_activity_delivery" model="trivia.tour.step.activity.type">
+            <field name="name">Delivery</field>
+            <field name="ref">delivery</field>
+            <field name="color">#f1c40f</field>
+        </record>
+        <record id="trivia_tour_activity_break" model="trivia.tour.step.activity.type">
+            <field name="name">Break</field>
+            <field name="ref">break</field>
+            <field name="color">#3498db</field>
+        </record>
+        <record id="trivia_tour_activity_reload" model="trivia.tour.step.activity.type">
+            <field name="name">Reload</field>
+            <field name="ref">reload</field>
+            <field name="color">#34495e</field>
+        </record>
+
     </data>
 </odoo>

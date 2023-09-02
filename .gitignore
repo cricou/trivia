@@ -9,3 +9,4 @@ buildit-plugins/
 egg_source/
 
 .python-version
+__pycache__/

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- STAGES TREE VIEW + MUTI_EDIT -->
+    <record id="tms_trivia_semi_trailer_tree" model="ir.ui.view">
+        <field name="name">trivia.semi.trailer.tree</field>
+        <field name="model">trivia.semi.trailer</field>
+        <field name="arch" type="xml">
+            <tree string="Semi Trailer">
+                <field name="licence_plate"/>
+                <field name="payload_capacity"/>
+                <field name="internal_length"/>
+                <field name="internal_width"/>
+                <field name="internal_height"/>
+                <field name="number_of_axles"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="tms_trivia_semi_trailer_form" model="ir.ui.view">
+        <field name="name">trivia.semi.trailer.form</field>
+        <field name="model">trivia.semi.trailer</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="Semi Trailer">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="licence_plate"/></h1>
+                    </div>
+                    <group>
+                        <field name="payload_capacity"/>
+                        <field name="internal_length"/>
+                        <field name="internal_width"/>
+                        <field name="internal_height"/>
+                        <field name="number_of_axles"/>
+                    </group>
+                </sheet>
+            </form>
+            
+        </field>
+    </record>
+
+    <record id="tms_trivia_semi_trailer_action" model="ir.actions.act_window">
+        <field name="name">Semi Trailer</field>
+        <field name="res_model">trivia.semi.trailer</field>
+        <field name="view_id" ref="trivia_tms.tms_trivia_semi_trailer_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Set a new semi trailer
+          </p>
+        </field>
+    </record>
+
+    <menuitem action="tms_trivia_semi_trailer_action"
+              parent="fleet.fleet_vehicles"
+              id="menu_tms_trivia_semi_trailer_menu"
+              groups="fleet.fleet_group_user"
+              sequence="2"/>
+</odoo>

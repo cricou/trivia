@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_trivia_fleet_vehicle_inherit" model="ir.ui.view">
+        <field name="name">trivia.fleet.vehicle.inherit</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id"  
+        ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location']" position="after">
+                <field name="semi_trailer_id"/>
+                <field name="tour_vehicle_type_id"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

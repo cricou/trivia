@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <t t-name="HereMapView.MapView">
+        <div style="position: relative; width: 100%; height: 100%;">
+            <div style="width: 100%; height: 100%;" class="o_here_map_view" id='here_map_view'>
+            </div>
+        </div>
+    </t>
+</templates>
