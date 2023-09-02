@@ -58,7 +58,7 @@ odoo.define("trivia_map.HereMapRenderer", function (require) {
             console.log(this);
             var tours = this.tours
             var platform = new H.service.Platform({
-                'apikey': ''
+                'apikey': 'SQhD9WLY6gazDhGmRnggpbip9ImhrCWuO707xJDsFro'
               });
          
             var defaultLayers = platform.createDefaultLayers();

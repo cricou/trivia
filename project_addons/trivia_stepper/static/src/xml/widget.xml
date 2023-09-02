@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template_quick_publish" xml: space="preserve">
+    <t t-name="TriviaHereMapTemplate">
+        <div id="trivia_map"/>
+    </t>
+</templates>
