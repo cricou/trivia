@@ -30,6 +30,7 @@ class TriviaTourPlan(models.Model):
     tour_plan_fleet_ids = fields.One2many('trivia.tour.plan.fleet', 'tour_plan_id')
     
     note = fields.Text(string="Note")
+    json_result = fields.Text()
 
     tour_ids = fields.One2many('trivia.tour', 'tour_plan_id')
     tour_count = fields.Integer(compute='_calc_tour_count')
@@ -459,9 +460,11 @@ class TriviaTourPlan(models.Model):
 
         response = post(url, json=body, headers=headers)
         if response.status_code == 200:
-            print(response.json()) 
+            
             self.generate_tours(response.json())
             self._calc_tour_route()
+        self.json_result = response.json()
+        
       
         
 
