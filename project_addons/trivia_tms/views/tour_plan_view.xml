@@ -76,6 +76,11 @@
                             </tree>
                         </field>
                     </group>
+                    <notebook>
+                        <page string="Debug">
+                            <field name ="json_result"/>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>
