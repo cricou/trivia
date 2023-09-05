@@ -86,7 +86,7 @@ class MissionOrder(models.Model):
         invoice_id = self.env['account.move'].create({
             'move_type': 'out_invoice',
             'partner_id': self.partner_id.id,
-            'partner_shipping_id': self.partner_id.id,
+            
             'payment_reference': self.name,
             'invoice_payment_term_id': self.partner_id.property_payment_term_id.id,
             'invoice_date': datetime.now(),
