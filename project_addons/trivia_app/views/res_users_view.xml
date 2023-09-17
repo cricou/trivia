@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_res_users_inherit" model="ir.ui.view">
+        <field name="name">res.users.form.inherit</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="//button[@name='action_show_groups']" position="before">
+                    <!-- Smart Button pour trivia.app -->
+                    <button name="open_one_signal_subscription"
+                            type="object" class="oe_stat_button" icon="fa-list">
+                        <field name="one_signal_subscription_count" class="o_stat_value"/>
+                        <span class="o_stat_text">OneSignal Sub.</span>
+                    </button>
+                    <button name="open_app"
+                            type="object" class="oe_stat_button" icon="fa-list">
+                        <field name="app_count" class="o_stat_value"/>
+                        <span class="o_stat_text">App</span>
+                    </button>
+                </xpath>
+            </data>
+        </field>
+    </record>
+</odoo>

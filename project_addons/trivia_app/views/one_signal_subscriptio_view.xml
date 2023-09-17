@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- STAGES TREE VIEW + MUTI_EDIT -->
+    <record id="app_trivia_one_signal_subscription_tree" model="ir.ui.view">
+        <field name="name">trivia.one.signal.subscription.tree</field>
+        <field name="model">trivia.one.signal.subscription</field>
+        <field name="arch" type="xml">
+            <tree string="location">
+                <field name="user_id"/>
+                <field name="subscription_ref"/>
+                <field name="one_signal_ref"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="app_trivia_one_signal_subscription_form" model="ir.ui.view">
+        <field name="name">trivia.one.signal.subscription.form</field>
+        <field name="model">trivia.one.signal.subscription</field>
+        <field name="priority" eval="1"/>
+        <field name="arch" type="xml">
+            <form string="location">
+                <sheet>
+                    <group>
+                        <field name="user_id"/>
+                        <field name="subscription_ref"/>
+                        <field name="one_signal_ref"/>
+                    </group>
+                </sheet>
+            </form>
+            
+        </field>
+    </record>
+
+    <record id="app_trivia_one_signal_subscription_action" model="ir.actions.act_window">
+        <field name="name">Location</field>
+        <field name="res_model">trivia.one.signal.subscription</field>
+        <field name="view_id" ref="trivia_app.app_trivia_one_signal_subscription_tree"/>
+        <field name="help" type="html">
+          <p class="o_view_nocontent_smiling_face">
+            Set a new location
+          </p>
+        </field>
+    </record>
+
+</odoo>
